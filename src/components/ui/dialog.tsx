@@ -75,7 +75,7 @@ function DialogContent({
                 size={fullScreen ? "icon-lg" : "icon-sm"}
               >
                 <XIcon className={fullScreen ? "size-6" : undefined} />
-                <span className="sr-only">Close</span>
+                <span className="sr-only">Cerrar</span>
               </Button>
             }
           />
@@ -115,7 +115,7 @@ function DialogFooter({
       {children}
       {showCloseButton && (
         <DialogPrimitive.Close
-          render={<Button variant="outline">Close</Button>}
+          render={<Button variant="outline">Cerrar</Button>}
         />
       )}
     </div>

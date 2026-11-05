@@ -1,133 +1,166 @@
-import NotificationDropdown from "@/components/shared/header/notification-dropdown";
-import ThemeToggleButton from "@/components/shared/header/theme-toggler";
-import UserDropdown from "@/components/shared/header/user-dropdown";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Field } from "@/components/ui/field";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-} from "@/components/ui/input-group";
-import { useSidebar } from "@/components/ui/sidebar";
-import { useTranslations } from "@/i18n";
-import { HorizontalDotsIcon, MenuTwoIcon, SearchIcon, XIcon } from "@/icons";
-import { cn } from "@/utils";
+import { useAuth } from "@/hooks/use-auth";
+import { getInitials } from "@/utils/get-initials";
+import { LogoutButton } from "@/components/shared/logout-button";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
-
+import { Button } from "@/components/ui/button";
+import { useSidebar } from "@/components/ui/sidebar";
+import ThemeToggleButton from "@/components/shared/header/theme-toggler";
+import { BellIcon, MenuTwoIcon, SearchIcon, ChevronDownIcon } from "@/icons";
+const destinations = [
+  ["Resumen", "/"],
+  ["Pacientes", "/pacientes"],
+  ["Santiago Izquierdo", "/pacientes/santiago-izquierdo"],
+  ["Membresías", "/membresias"],
+  ["Planes y versiones", "/planes"],
+  ["Beneficios y consumos", "/beneficios"],
+  ["Prevención dental", "/prevencion"],
+  ["Clínicas", "/clinicas"],
+  ["Usuarios y permisos", "/usuarios"],
+  ["Invitaciones", "/usuarios/invitaciones"],
+  ["Auditoría", "/auditoria"],
+];
 export default function AppHeader() {
-  const t = useTranslations("header");
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [isApplicationMenuOpen, setApplicationMenuOpen] = useState(false);
-  const { openMobile, toggleSidebar } = useSidebar();
-
-  const toggleApplicationMenu = () => {
-    setApplicationMenuOpen(!isApplicationMenuOpen);
-  };
-
+  const { user } = useAuth();
+  const { toggleSidebar } = useSidebar();
+  const [panel, setPanel] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+  const ref = useRef<HTMLElement>(null);
   useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key === "k") {
-        event.preventDefault();
-        inputRef.current?.focus();
-      }
+    const close = (e: PointerEvent) => {
+      if (!ref.current?.contains(e.target as Node)) setPanel(null);
     };
-
-    document.addEventListener("keydown", handleKeyDown);
-
+    const escape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setPanel(null);
+    };
+    document.addEventListener("pointerdown", close);
+    document.addEventListener("keydown", escape);
     return () => {
-      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("pointerdown", close);
+      document.removeEventListener("keydown", escape);
     };
   }, []);
-
+  const toggle = (name: string) => setPanel(panel === name ? null : name);
   return (
-    <header className="sticky top-0 z-50 flex w-full shrink-0 border-gray-200 bg-white xl:border-b dark:border-gray-800 dark:bg-gray-900">
-      <div className="flex grow flex-col items-center justify-between xl:flex-row xl:px-6">
-        {/* Left side content */}
-        <div className="flex w-full items-center justify-between gap-2 border-b border-gray-200 px-3 py-3 sm:gap-4 xl:justify-normal xl:border-b-0 xl:px-0 xl:py-4 dark:border-gray-800">
-          <Button
-            variant="outline"
-            size="icon"
-            className="text-gray-500 lg:size-11 dark:text-gray-400"
-            onClick={toggleSidebar}
-            aria-label={t("toggleSidebar")}
-          >
-            {openMobile ? (
-              <XIcon className="size-6" />
-            ) : (
-              <MenuTwoIcon className="size-auto! rtl:-scale-x-100" />
-            )}
-          </Button>
-
-          <Link to="/" className="xl:hidden">
-            <img
-              className="h-8 w-38.5 dark:hidden"
-              src="/images/logo/logo.svg"
-              alt="Logo"
-            />
-            <img
-              className="hidden h-8 w-38.5 dark:block"
-              src="/images/logo/logo-dark.svg"
-              alt="Logo"
-            />
-          </Link>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleApplicationMenu}
-            aria-label="Toggle application menu"
-            className="text-gray-700 xl:hidden dark:text-gray-400"
-          >
-            <HorizontalDotsIcon />
-          </Button>
-
-          <div className="hidden xl:block">
-            <form onSubmit={(e) => e.preventDefault()}>
-              <Field className="xl:w-107.5">
-                <InputGroup className="border-gray-200 bg-transparent dark:border-gray-800 dark:bg-white/3">
-                  <InputGroupAddon align="inline-start">
-                    <SearchIcon className="size-5 text-gray-500 dark:text-gray-400" />
-                  </InputGroupAddon>
-                  <InputGroupInput
-                    ref={inputRef}
-                    type="text"
-                    placeholder={t("searchPlaceholder")}
-                    className="text-gray-800 placeholder:text-gray-400 dark:text-white/90 dark:placeholder:text-white/30"
-                  />
-                  <InputGroupAddon align="inline-end">
-                    <Badge
-                      variant="light"
-                      color="gray"
-                      size="sm"
-                      className="cursor-pointer gap-0.5 rounded-lg border border-gray-200 bg-gray-50 px-1.75 py-[4.5px] text-xs tracking-[-0.2px] text-gray-500 shadow-none dark:border-gray-800 dark:bg-white/3 dark:text-gray-400"
-                    >
-                      <span>⌘</span>
-                      <span>K</span>
-                    </Badge>
-                  </InputGroupAddon>
-                </InputGroup>
-              </Field>
-            </form>
-          </div>
-        </div>
-
-        {/* Right side content */}
-        <div
-          className={cn(
-            "flex w-full items-center justify-between gap-4 px-5 py-4 shadow-theme-md xl:flex xl:justify-end xl:px-0 xl:shadow-none",
-            isApplicationMenuOpen ? "flex" : "hidden",
-          )}
+    <header
+      ref={ref}
+      className="relative z-50 mx-4 mt-4 flex flex-wrap items-center gap-3 rounded-xl bg-white p-4 md:mx-6 md:mt-6 dark:bg-[#142539]"
+    >
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={toggleSidebar}
+        aria-label="Abrir o cerrar menú"
+      >
+        <MenuTwoIcon />
+      </Button>
+      <select
+        aria-label="Clínica de trabajo"
+        className="max-w-40 rounded-lg border-0 bg-transparent text-xs dark:bg-[#142539] dark:text-gray-200"
+      >
+        <option>Todas las clínicas</option>
+        <option>Sede Central</option>
+        <option>Sede Norte</option>
+      </select>
+      <div className="relative order-last w-full sm:order-none sm:w-auto sm:flex-1">
+        <label className="flex items-center gap-2 rounded-lg bg-blue-50 px-3 dark:bg-[#1b3046]">
+          <SearchIcon className="size-5" />
+          <input
+            className="w-full border-0 bg-transparent py-3 text-sm outline-none focus:ring-0 dark:text-gray-200"
+            aria-label="Búsqueda global"
+            placeholder="Buscar usuarios o apartados…"
+            value={query}
+            onFocus={() => setPanel("search")}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setPanel("search");
+            }}
+          />
+        </label>
+        {panel === "search" && (
+          <section className="bc-popover right-0 left-0 mt-2">
+            <h2 className="mb-3 font-medium">
+              {query ? `Resultados para «${query}»` : "Accesos rápidos"}
+            </h2>
+            {destinations
+              .filter(([name]) =>
+                name.toLowerCase().includes(query.toLowerCase()),
+              )
+              .map(([name, to]) => (
+                <Link
+                  onClick={() => setPanel(null)}
+                  className="bc-menu-link"
+                  key={to}
+                  to={to}
+                >
+                  {name}
+                </Link>
+              ))}
+            {!destinations.some(([name]) =>
+              name.toLowerCase().includes(query.toLowerCase()),
+            ) && <p>No se encontraron resultados.</p>}
+          </section>
+        )}
+      </div>
+      <ThemeToggleButton />
+      <div className="relative">
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label="Notificaciones"
+          aria-expanded={panel === "notifications"}
+          onClick={() => toggle("notifications")}
         >
-          <div className="flex items-center gap-2 2xsm:gap-3">
-            <ThemeToggleButton />
-
-            <NotificationDropdown />
-          </div>
-
-          <UserDropdown />
-        </div>
+          <BellIcon />
+        </Button>
+        {panel === "notifications" && (
+          <section className="bc-popover right-0 mt-3 w-76">
+            <h2 className="mb-3 font-medium">Notificaciones · 3 nuevas</h2>
+            {[
+              ["32 membresías próximas a vencer", "/membresias"],
+              ["Limpieza de Santiago · 15 nov", "/prevencion"],
+              ["Nuevo acceso pendiente de verificar", "/usuarios"],
+            ].map(([name, to]) => (
+              <Link
+                className="bc-menu-link"
+                to={to}
+                key={to}
+                onClick={() => setPanel(null)}
+              >
+                {name}
+              </Link>
+            ))}
+          </section>
+        )}
+      </div>
+      <div className="relative">
+        <Button
+          variant="ghost"
+          aria-expanded={panel === "user"}
+          onClick={() => toggle("user")}
+        >
+          <span className="flex size-9 items-center justify-center rounded-full bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200">
+            {getInitials(user?.name || "")}
+          </span>
+          <span className="hidden md:inline">{user?.name}</span>
+          <ChevronDownIcon />
+        </Button>
+        {panel === "user" && (
+          <section className="bc-popover right-0 mt-3 w-60">
+            <h2 className="font-medium">{user?.name}</h2>
+            <p className="my-2 text-xs text-gray-500 dark:text-gray-400">
+              {user?.roles.join(", ")}
+            </p>
+            <Link
+              to="/mi-cuenta"
+              className="bc-menu-link"
+              onClick={() => setPanel(null)}
+            >
+              Mi cuenta y seguridad
+            </Link>
+            <LogoutButton />
+          </section>
+        )}
       </div>
     </header>
   );

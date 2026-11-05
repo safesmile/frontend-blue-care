@@ -1,9 +1,4 @@
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  useSidebar,
-} from "@/components/ui/sidebar";
+import { Sidebar, SidebarContent, useSidebar } from "@/components/ui/sidebar";
 import { useState } from "react";
 import { useLocation } from "react-router";
 import { navItems, othersItems, supportItems } from "./data";
@@ -12,23 +7,16 @@ import SidebarNavGroup from "./sidebar-nav-group";
 import type { MenuType, NavItem } from "./types";
 
 const menuSections: { type: MenuType; labelKey: string; items: NavItem[] }[] = [
-  { type: "main", labelKey: "groups.menu", items: navItems },
-  { type: "support", labelKey: "groups.support", items: supportItems },
-  { type: "others", labelKey: "groups.others", items: othersItems },
+  { type: "main", labelKey: "Administración", items: navItems },
+  { type: "support", labelKey: "Soporte", items: supportItems },
+  { type: "others", labelKey: "Otros", items: othersItems },
 ];
 
 const findMatchingSubmenu = (path: string) => {
   for (const section of menuSections) {
     for (let index = 0; index < section.items.length; index++) {
       const nav = section.items[index];
-      if (
-        nav.subItems?.some(
-          (subItem) =>
-            subItem.path === path ||
-            (subItem.path === "/ai-settings" &&
-              path.startsWith("/ai-settings")),
-        )
-      ) {
+      if (nav.subItems?.some((subItem) => subItem.path === path)) {
         return { type: section.type, index };
       }
     }
@@ -92,11 +80,6 @@ export default function AppSidebar() {
           </div>
         </nav>
       </SidebarContent>
-
-      {showContent && (
-        <SidebarFooter className="p-0 px-5 pt-1 pb-4">
-        </SidebarFooter>
-      )}
     </Sidebar>
   );
 }

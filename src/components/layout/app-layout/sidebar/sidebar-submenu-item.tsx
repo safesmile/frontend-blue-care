@@ -1,4 +1,3 @@
-import { useTranslations } from "@/i18n";
 import { cn } from "@/utils";
 import { Link } from "react-router";
 import type { SubItem } from "./types";
@@ -12,8 +11,6 @@ export default function SidebarSubmenuItem({
   subItem,
   isActive,
 }: SidebarSubmenuItemProps) {
-  const t = useTranslations("sidebar");
-
   return (
     <li>
       <Link
@@ -26,7 +23,7 @@ export default function SidebarSubmenuItem({
             : "menu-dropdown-item-inactive",
         )}
       >
-        {t(`items.${subItem.key}`)}
+        {subItem.key}
         <span className="ms-auto flex items-center gap-1">
           {subItem.new && (
             <span
@@ -37,7 +34,7 @@ export default function SidebarSubmenuItem({
                   : "menu-dropdown-badge-inactive",
               )}
             >
-              {t("badges.new")}
+              {"Nuevo"}
             </span>
           )}
           {subItem.pro && (
@@ -49,7 +46,7 @@ export default function SidebarSubmenuItem({
                   : "menu-dropdown-badge-pro-inactive",
               )}
             >
-              {t("badges.pro")}
+              {"Pro"}
             </span>
           )}
         </span>

@@ -1,10 +1,10 @@
+import { LogoutButton } from "@/components/shared/logout-button";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { SidebarMenuItem as UiSidebarMenuItem } from "@/components/ui/sidebar";
-import { useTranslations } from "@/i18n";
 import { ChevronDownIcon } from "@/icons";
 import { cn } from "@/utils";
 import { Link } from "react-router";
@@ -26,24 +26,27 @@ export default function SidebarMenuItem({
   pathname,
   onToggle,
 }: SidebarMenuItemProps) {
-  const t = useTranslations("sidebar");
-
   const hasSubItems = Boolean(nav.subItems?.length);
   const hasActiveChild = Boolean(
-    nav.subItems?.some(
-      (subItem) =>
-        subItem.path === pathname ||
-        (subItem.path === "/ai-settings" &&
-          pathname.startsWith("/ai-settings")),
-    ),
+    nav.subItems?.some((subItem) => subItem.path === pathname),
   );
-  const isDirectActive = Boolean(nav.path && nav.path === pathname);
+  const isDirectActive = Boolean(
+    nav.path &&
+    (nav.path === "/"
+      ? pathname === "/"
+      : pathname === nav.path || pathname.startsWith(`${nav.path}/`)),
+  );
   const isItemActive = hasSubItems ? isOpen || hasActiveChild : isDirectActive;
   const isPanelOpen = showContent && isOpen;
 
   return (
     <UiSidebarMenuItem>
-      {hasSubItems ? (
+      {nav.key === "Cerrar sesión" ? (
+        <LogoutButton className="group menu-item w-full menu-item-inactive">
+          <span className="menu-item-icon-inactive">{nav.icon}</span>
+          {showContent && <span className="menu-item-text">Cerrar sesión</span>}
+        </LogoutButton>
+      ) : hasSubItems ? (
         <Collapsible open={isPanelOpen} onOpenChange={onToggle}>
           <CollapsibleTrigger
             className={cn(
@@ -61,9 +64,7 @@ export default function SidebarMenuItem({
             >
               {nav.icon}
             </span>
-            {showContent && (
-              <span className="menu-item-text">{t(`items.${nav.key}`)}</span>
-            )}
+            {showContent && <span className="menu-item-text">{nav.key}</span>}
             {nav.new && showContent && (
               <span
                 className={cn(
@@ -73,7 +74,7 @@ export default function SidebarMenuItem({
                     : "menu-dropdown-badge-inactive",
                 )}
               >
-                {t("badges.new")}
+                {"Nuevo"}
               </span>
             )}
             {showContent && (
@@ -91,11 +92,7 @@ export default function SidebarMenuItem({
                 <SidebarSubmenuItem
                   key={subItem.key}
                   subItem={subItem}
-                  isActive={
-                    subItem.path === pathname ||
-                    (subItem.path === "/ai-settings" &&
-                      pathname.startsWith("/ai-settings"))
-                  }
+                  isActive={subItem.path === pathname}
                 />
               ))}
             </ul>
@@ -120,9 +117,7 @@ export default function SidebarMenuItem({
             >
               {nav.icon}
             </span>
-            {showContent && (
-              <span className="menu-item-text">{t(`items.${nav.key}`)}</span>
-            )}
+            {showContent && <span className="menu-item-text">{nav.key}</span>}
           </Link>
         )
       )}

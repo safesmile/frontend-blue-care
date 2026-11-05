@@ -1,36 +1,54 @@
-import GridShape from "@/components/shared/grid-shape";
-import { Link, Outlet } from "react-router";
-import ThemeToggler from "./theme-toggler";
-
-export default function AuthLayout() {
+import type { ReactNode } from "react";
+import { BrandLogo } from "@/components/shared/brand-logo";
+import { PageMeta } from "@/components/shared/page-meta";
+import ThemeToggleButton from "@/components/shared/header/theme-toggler";
+export default function AuthLayout({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description: string;
+  children: ReactNode;
+}) {
   return (
-    <div className="relative z-1 bg-white p-6 sm:p-0 dark:bg-gray-900">
-      <div className="relative flex h-screen w-full flex-col justify-center sm:p-0 lg:flex-row dark:bg-gray-900">
-        <Outlet />
-        <div className="relative hidden h-full w-full items-center justify-center bg-brand-950 lg:grid lg:w-1/2 dark:bg-white/5">
-          <div className="z-1 flex h-full items-center justify-center">
-            <GridShape />
-
-            <div className="flex max-w-xs flex-col items-center">
-              <Link to="/" className="mb-4 block">
-                <img
-                  width={231}
-                  height={48}
-                  src="/images/logo/auth-logo.svg"
-                  alt="Logo"
-                />
-              </Link>
-              <p className="text-center text-gray-400 dark:text-white/60">
-                Free and Open-Source Tailwind CSS Admin Dashboard Template
-              </p>
-            </div>
-          </div>
+    <div className="grid min-h-svh bg-[#f4f9fc] text-gray-700 lg:grid-cols-[45%_55%] dark:bg-[#081421] dark:text-gray-200">
+      <PageMeta
+        title={`${title} | BlueCare`}
+        description="Acceso al panel administrativo de BlueCare"
+      />
+      <aside className="hidden flex-col justify-center bg-[#0d2875] px-16 py-12 text-white lg:flex dark:bg-[#0b1e4a]">
+        <div className="mb-10 w-fit rounded-xl bg-white p-4 dark:bg-transparent">
+          <BrandLogo className="w-56" />
         </div>
-
-        <div className="fixed inset-e-6 bottom-6 z-50 hidden sm:block">
-          <ThemeToggler />
+        <h1 className="text-5xl leading-tight font-medium">
+          El cuidado
+          <br />
+          continúa.
+        </h1>
+        <p className="mt-8 text-xl text-blue-100">
+          Membresías, prevención y bienestar.
+          <br />
+          Un equipo conectado en todas las clínicas.
+        </p>
+        <p className="mt-8 text-xs tracking-wider text-teal-300">
+          PREVENCIÓN · BENEFICIOS · BIENESTAR
+        </p>
+      </aside>
+      <main className="relative flex flex-col justify-center px-6 py-16 sm:px-16">
+        <div className="absolute top-5 right-5">
+          <ThemeToggleButton />
         </div>
-      </div>
+        <div className="mx-auto w-full max-w-110">
+          <BrandLogo className="mb-8 w-44 lg:hidden" />
+          <h2 className="bc-title">{title}</h2>
+          <p className="mt-5 mb-6 text-sm">{description}</p>
+          {children}
+          <p className="mt-6 text-xs text-gray-500 dark:text-gray-400">
+            Acceso exclusivo para personal autorizado.
+          </p>
+        </div>
+      </main>
     </div>
   );
 }

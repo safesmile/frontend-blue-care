@@ -28,7 +28,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     const legacySavedTheme = localStorage.getItem(
       "theme",
     ) as ResolvedTheme | null;
-    const initialMode = savedMode || (legacySavedTheme as ThemeMode) || "light";
+    const initialMode = savedMode || (legacySavedTheme as ThemeMode) || "auto";
 
     setThemeModeState(initialMode);
     setIsInitialized(true);

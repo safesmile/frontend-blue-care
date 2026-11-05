@@ -1,34 +1,11 @@
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-
-interface BreadcrumbProps {
-  pageTitle: string;
-}
-
-export function PageBreadcrumb({ pageTitle }: BreadcrumbProps) {
+import { Link } from "react-router";
+export function PageBreadcrumb({ pageTitle }: { pageTitle: string }) {
   return (
-    <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-      <h2 className="text-title-lg font-semibold text-gray-800 dark:text-white/90">
-        {pageTitle}
-      </h2>
-
-      <Breadcrumb>
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink to="/">Home</BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbPage>{pageTitle}</BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
+    <div className="mb-6">
+      <h1 className="bc-title">{pageTitle}</h1>
+      <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+        <Link to="/">Blue Care</Link> / {pageTitle} · Datos ilustrativos
+      </p>
     </div>
   );
 }

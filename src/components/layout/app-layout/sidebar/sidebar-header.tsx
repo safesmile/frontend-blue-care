@@ -1,32 +1,15 @@
 import { SidebarHeader } from "@/components/ui/sidebar";
+import { BrandLogo } from "@/components/shared/brand-logo";
 import { Link } from "react-router";
-
-interface AppSidebarHeaderProps {
-  showContent: boolean;
-}
-
 export default function AppSidebarHeader({
   showContent,
-}: AppSidebarHeaderProps) {
+}: {
+  showContent: boolean;
+}) {
   return (
-    <SidebarHeader className="px-5 py-8">
-      <Link to="/">
-        {showContent ? (
-          <>
-            <img
-              className="h-10 w-37.5 dark:hidden"
-              src="/images/logo/logo.svg"
-              alt="Logo"
-            />
-            <img
-              className="hidden h-10 w-37.5 dark:block"
-              src="/images/logo/logo-dark.svg"
-              alt="Logo"
-            />
-          </>
-        ) : (
-          <img src="/images/logo/logo-icon.svg" alt="Logo" className="size-8" />
-        )}
+    <SidebarHeader className="px-5 py-6">
+      <Link to="/" aria-label="BlueCare, inicio">
+        <BrandLogo className={showContent ? "mx-auto w-40" : "w-10"} />
       </Link>
     </SidebarHeader>
   );

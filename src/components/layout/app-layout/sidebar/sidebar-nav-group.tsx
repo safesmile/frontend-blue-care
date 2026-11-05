@@ -3,7 +3,6 @@ import {
   SidebarGroupLabel,
   SidebarMenu,
 } from "@/components/ui/sidebar";
-import { useTranslations } from "@/i18n";
 import { HorizontalDotsIcon } from "@/icons";
 import { cn } from "@/utils";
 import SidebarMenuItem from "./sidebar-menu-item";
@@ -28,8 +27,6 @@ export default function SidebarNavGroup({
   pathname,
   onToggleSubmenu,
 }: SidebarNavGroupProps) {
-  const t = useTranslations("sidebar");
-
   return (
     <SidebarGroup className="p-0">
       <SidebarGroupLabel
@@ -38,7 +35,7 @@ export default function SidebarNavGroup({
           !showContent ? "xl:justify-center" : "justify-start",
         )}
       >
-        {showContent ? t(labelKey) : <HorizontalDotsIcon />}
+        {showContent ? labelKey : <HorizontalDotsIcon />}
       </SidebarGroupLabel>
       <SidebarMenu className="gap-1">
         {items.map((nav, index) => (
