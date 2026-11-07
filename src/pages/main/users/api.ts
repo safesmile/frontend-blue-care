@@ -1,8 +1,6 @@
 import type { AuthUser } from "@/lib/api-client";
-export interface Page<T> {
-  items: T[];
-  total: number;
-}
+import type { Page } from "@/lib/list-page";
+export type { Page } from "@/lib/list-page";
 export interface Role {
   id: string;
   name: string;
@@ -30,6 +28,8 @@ export interface Invitation {
   lastSentAt: string | null;
 }
 export interface InvitationInput {
+  staff?: boolean;
+  clinicAssignments?: { clinicId: string; roles: string[] }[];
   firstName: string;
   lastName: string;
   email: string;
@@ -68,7 +68,7 @@ export function createUsersApi(client: Client) {
     invite: (body: InvitationInput) =>
       client.authorized<Invitation>("/auth/invitations", {
         method: "POST",
-        body,
+        body: { ...body, clinicAssignments: body.clinicAssignments ?? [] },
       }),
     resend: (id: string) =>
       client.authorized<Invitation>(
@@ -80,6 +80,19 @@ export function createUsersApi(client: Client) {
         `/auth/invitations/${encodeURIComponent(id)}/revoke`,
         { method: "POST", body: reason ? { reason } : {} },
       ),
+    async clinics() {
+      const items: { id: string; name: string }[] = [];
+      let total = 1;
+      while (items.length < total) {
+        const result = await client.authorized<
+          Page<{ id: string; name: string }>
+        >(`/clinics/available?${page(100, items.length)}`);
+        if (!result.items.length) break;
+        items.push(...result.items);
+        total = result.total;
+      }
+      return items;
+    },
     async roles() {
       const items: Role[] = [];
       let total = 1;

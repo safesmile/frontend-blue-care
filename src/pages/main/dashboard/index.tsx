@@ -50,11 +50,7 @@ export default function DashboardPage() {
         headers={["Paciente", "Próximo cuidado", "Clínica", "Estado"]}
         rows={[
           [
-            <Link
-              key="santiago"
-              className="bc-link"
-              to="/pacientes/santiago-izquierdo"
-            >
+            <Link key="santiago" className="bc-link" to="/pacientes">
               Santiago Izquierdo
             </Link>,
             "15 nov · Limpieza",

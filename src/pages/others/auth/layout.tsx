@@ -1,3 +1,4 @@
+import { sessionMessages } from "@/lib/session-messages";
 import type { ReactNode } from "react";
 import { BrandLogo } from "@/components/shared/brand-logo";
 import { PageMeta } from "@/components/shared/page-meta";
@@ -45,7 +46,7 @@ export default function AuthLayout({
           <p className="mt-5 mb-6 text-sm">{description}</p>
           {children}
           <p className="mt-6 text-xs text-gray-500 dark:text-gray-400">
-            Acceso exclusivo para personal autorizado.
+            {sessionMessages().authFooter}
           </p>
         </div>
       </main>

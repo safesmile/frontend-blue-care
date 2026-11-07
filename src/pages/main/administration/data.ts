@@ -28,7 +28,7 @@ export const modules: Record<string, ModuleData> = {
         ],
         clinic: "Sede Central",
         status: "Verificada",
-        href: "/pacientes/santiago-izquierdo",
+        href: "/pacientes",
       },
       {
         cells: [
@@ -108,7 +108,7 @@ export const modules: Record<string, ModuleData> = {
   beneficios: {
     title: "Beneficios y consumos",
     action: "Consultar paciente",
-    href: "/pacientes/santiago-izquierdo",
+    href: "/pacientes",
     headers: ["Paciente / beneficio", "Utilizados", "Restantes", "Acción"],
     fields: [],
     rows: [
@@ -141,7 +141,7 @@ export const modules: Record<string, ModuleData> = {
         ],
         clinic: "Sede Central",
         status: "Programado",
-        href: "/pacientes/santiago-izquierdo",
+        href: "/pacientes",
       },
       {
         cells: [
@@ -162,7 +162,7 @@ export const modules: Record<string, ModuleData> = {
         ],
         clinic: "Sede Central",
         status: "Realizado",
-        href: "/pacientes/santiago-izquierdo",
+        href: "/pacientes",
       },
     ],
   },

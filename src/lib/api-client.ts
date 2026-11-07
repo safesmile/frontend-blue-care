@@ -1,3 +1,10 @@
+export type SessionMode = "patient" | "staff";
+export interface AccessibleClinic {
+  id: string;
+  name: string;
+  roles: string[];
+  permissions: string[];
+}
 export interface AuthUser {
   id: string;
   firstName: string;
@@ -8,6 +15,11 @@ export interface AuthUser {
   enabled: boolean;
   roles: string[];
   permissions: string[];
+  mode?: SessionMode;
+  clinicId?: string | null;
+  clinics?: AccessibleClinic[];
+  globalRoles?: string[];
+  globalPermissions?: string[];
 }
 export interface Credentials {
   token: string;
@@ -25,6 +37,8 @@ export type AuthSnapshot = {
   status: "loading" | "authenticated" | "anonymous" | "error";
   user: AuthUser | null;
   error: string | null;
+  switching: boolean;
+  contextVersion: number;
 };
 export class ApiError extends Error {
   readonly status: number;
@@ -63,6 +77,22 @@ export function authErrorMessage(error: unknown, operation = "") {
     return "La operación entra en conflicto con el estado actual. Revisa los datos e intenta nuevamente.";
   return "No se pudo completar la solicitud. Revisa los datos e intenta nuevamente.";
 }
+// Route metadata such as clinicPermission must not look like a clinic or portal change.
+const contextKey = (user: AuthUser | null) =>
+  JSON.stringify(
+    user
+      ? [
+          user.id,
+          user.mode,
+          user.clinicId,
+          user.roles,
+          user.permissions,
+          user.globalRoles,
+          user.globalPermissions,
+          user.clinics,
+        ]
+      : null,
+  );
 const STORAGE_KEY = "bluecare.auth.session";
 const validCredentials = (value: unknown): value is Credentials => {
   if (!value || typeof value !== "object") return false;
@@ -95,14 +125,21 @@ export function createApiClient({
   let revision = 0;
   let identityEpoch = 0;
   let closing = false;
+  let contextEpoch = 0;
+  let contextFlight: Promise<void> | null = null;
   let snapshot: AuthSnapshot = {
     status: credentials ? "loading" : "anonymous",
     user: null,
     error: null,
+    switching: false,
+    contextVersion: 0,
   };
   const listeners = new Set<() => void>();
-  const publish = (state: AuthSnapshot) => {
-    snapshot = state;
+  const publish = (
+    state: Pick<AuthSnapshot, "status" | "user" | "error"> &
+      Partial<AuthSnapshot>,
+  ) => {
+    snapshot = { ...snapshot, ...state };
     listeners.forEach((fn) => fn());
   };
   const save = (value: Credentials | null) => {
@@ -118,7 +155,7 @@ export function createApiClient({
   const clearSession = () => {
     identityEpoch++;
     save(null);
-    publish({ status: "anonymous", user: null, error: null });
+    publish({ status: "anonymous", user: null, error: null, switching: false });
   };
   async function send<T>(
     path: string,
@@ -180,13 +217,28 @@ export function createApiClient({
     if (!current || closing) return Promise.reject(new ApiError(401));
     refreshFlight = (async () => {
       try {
-        const next = await send<Credentials>("/auth/refresh", {
-          method: "POST",
-          body: { refreshToken: current.refreshToken },
-        });
+        const next = await send<Credentials & { user?: AuthUser }>(
+          "/auth/refresh",
+          {
+            method: "POST",
+            body: { refreshToken: current.refreshToken },
+          },
+        );
         if (revision !== expected) throw new ApiError(401);
         if (!validCredentials(next)) throw new ApiError(502);
-        save(next);
+        save({ token: next.token, refreshToken: next.refreshToken });
+        if (next.user) {
+          const changed =
+            !!snapshot.user &&
+            contextKey(snapshot.user) !== contextKey(next.user);
+          if (changed) contextEpoch++;
+          publish({
+            status: "authenticated",
+            user: next.user,
+            error: null,
+            contextVersion: snapshot.contextVersion + (changed ? 1 : 0),
+          });
+        }
       } catch (error) {
         if (
           revision === expected &&
@@ -205,27 +257,94 @@ export function createApiClient({
     path: string,
     options: { method?: string; body?: unknown } = {},
   ): Promise<T> {
+    if (contextFlight) await contextFlight;
     if (!credentials || closing) throw new ApiError(401);
+    const expectedContext = contextEpoch;
     const usedToken = credentials.token;
     const expectedIdentity = identityEpoch;
     try {
       const result = await send<T>(path, { ...options, token: usedToken });
       if (identityEpoch !== expectedIdentity) throw new ApiError(401);
+      if (contextEpoch !== expectedContext)
+        throw new ApiError(409, "Session context changed");
       return result;
     } catch (error) {
+      if (contextEpoch !== expectedContext)
+        throw new ApiError(409, "Session context changed");
       if (!(error instanceof ApiError) || error.status !== 401) throw error;
       if (!credentials || closing || identityEpoch !== expectedIdentity)
         throw error;
       // Another request may already have rotated both credentials.
       if (credentials.token === usedToken) await refresh();
       if (!credentials || closing) throw new ApiError(401);
+      if (contextEpoch !== expectedContext)
+        throw new ApiError(409, "Session context changed");
       const result = await send<T>(path, {
         ...options,
         token: credentials.token,
       });
       if (identityEpoch !== expectedIdentity) throw new ApiError(401);
+      if (contextEpoch !== expectedContext)
+        throw new ApiError(409, "Session context changed");
       return result;
     }
+  }
+  function switchContext(
+    path: "/auth/switch-clinic",
+    selection: { clinicId: string | null },
+  ) {
+    if (contextFlight || closing) return Promise.reject(new ApiError(409));
+    contextEpoch++;
+    const expectedIdentity = identityEpoch;
+    publish({ ...snapshot, switching: true });
+    contextFlight = (async () => {
+      if (refreshFlight) await refreshFlight;
+      if (!credentials || closing) throw new ApiError(401);
+      let expected = revision;
+      const current = credentials;
+      let result: Credentials & { user: AuthUser };
+      try {
+        result = await send(path, {
+          method: "POST",
+          token: current.token,
+          body: { ...selection, refreshToken: current.refreshToken },
+        });
+      } catch (error) {
+        if (
+          !(error instanceof ApiError) ||
+          error.status !== 401 ||
+          revision !== expected
+        )
+          throw error;
+        await refresh();
+        if (!credentials || closing) throw new ApiError(401);
+        expected = revision;
+        result = await send(path, {
+          method: "POST",
+          token: credentials.token,
+          body: { ...selection, refreshToken: credentials.refreshToken },
+        });
+      }
+      if (
+        closing ||
+        revision !== expected ||
+        identityEpoch !== expectedIdentity
+      )
+        throw new ApiError(401);
+      if (!validCredentials(result) || !result.user?.id)
+        throw new ApiError(502);
+      save({ token: result.token, refreshToken: result.refreshToken });
+      publish({
+        status: "authenticated",
+        user: result.user,
+        error: null,
+        contextVersion: snapshot.contextVersion + 1,
+      });
+    })().finally(() => {
+      contextFlight = null;
+      publish({ ...snapshot, switching: false });
+    });
+    return contextFlight;
   }
   let initializeFlight: Promise<void> | null = null;
   function initialize() {
@@ -233,13 +352,24 @@ export function createApiClient({
     if (!credentials) return Promise.resolve();
     publish({ status: "loading", user: null, error: null });
     const expectedIdentity = identityEpoch;
+    const expectedContext = contextEpoch;
     initializeFlight = (async () => {
       try {
         const user = await authorized<AuthUser>("/auth/me");
-        if (!credentials || identityEpoch !== expectedIdentity) return;
+        if (
+          !credentials ||
+          identityEpoch !== expectedIdentity ||
+          contextEpoch !== expectedContext
+        )
+          return;
         publish({ status: "authenticated", user, error: null });
       } catch (error) {
-        if (!credentials || identityEpoch !== expectedIdentity) return;
+        if (
+          !credentials ||
+          identityEpoch !== expectedIdentity ||
+          contextEpoch !== expectedContext
+        )
+          return;
         if (error instanceof ApiError && [401, 403].includes(error.status))
           clearSession();
         else
@@ -266,13 +396,37 @@ export function createApiClient({
     initialize,
     clearSession,
     authorized,
+    async reloadProfile() {
+      const expectedIdentity = identityEpoch;
+      const expectedContext = contextEpoch;
+      const user = await authorized<AuthUser>("/auth/me");
+      if (
+        !credentials ||
+        identityEpoch !== expectedIdentity ||
+        contextEpoch !== expectedContext
+      )
+        return;
+      const changed = contextKey(snapshot.user) !== contextKey(user);
+      if (changed) contextEpoch++;
+      publish({
+        status: "authenticated",
+        user,
+        error: null,
+        contextVersion: snapshot.contextVersion + (changed ? 1 : 0),
+      });
+    },
+    switchClinic: (clinicId: string | null) =>
+      switchContext("/auth/switch-clinic", { clinicId }),
     async login(email: string, password: string) {
       // Invalidate earlier in-flight logins/refreshes before accepting a new identity.
       identityEpoch++;
       const expected = ++revision;
       const result = await send<Credentials & { user: AuthUser }>(
         "/auth/login",
-        { method: "POST", body: { email, password } },
+        {
+          method: "POST",
+          body: { email, password },
+        },
       );
       if (revision !== expected) throw new ApiError(401);
       if (!validCredentials(result) || !result.user?.id)
@@ -284,6 +438,13 @@ export function createApiClient({
       if (logoutFlight) return logoutFlight;
       // Let an already-running rotation finish before revoking its replacement.
       logoutFlight = (async () => {
+        if (contextFlight) {
+          try {
+            await contextFlight;
+          } catch {
+            /* Revoke latest available session. */
+          }
+        }
         if (refreshFlight) {
           try {
             await refreshFlight;

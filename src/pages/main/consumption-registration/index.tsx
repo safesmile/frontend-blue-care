@@ -1,5 +1,6 @@
+import { peopleMessages } from "@/lib/session-messages";
+import { BackLink } from "@/components/shared/navigation-actions";
 import { useState } from "react";
-import { Link } from "react-router";
 import { PageMeta } from "@/components/shared/page-meta";
 import { PageBreadcrumb } from "@/components/shared/page-breadcrumb";
 import { Button } from "@/components/ui/button";
@@ -22,9 +23,9 @@ export default function ConsumptionRegistrationPage() {
           <Button type="submit" disabled={confirmed}>
             {confirmed ? "Consumo preparado" : "Confirmar consumo"}
           </Button>
-          <Link className="bc-link self-center" to="/beneficios">
-            Volver a beneficios
-          </Link>
+          <BackLink className="self-center" to="/beneficios">
+            {peopleMessages().backToBenefits}
+          </BackLink>
         </div>
         <section className="bc-panel bc-form-grid">
           <label>

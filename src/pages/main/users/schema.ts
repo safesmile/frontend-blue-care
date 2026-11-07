@@ -35,6 +35,10 @@ export const invitationSchema = names
       .email("Ingresa un correo válido.")
       .max(254),
     roles,
+    staff: z.boolean().optional(),
+    clinicAssignments: z
+      .array(z.object({ clinicId: z.string().uuid(), roles }))
+      .optional(),
   })
   .refine(combined, combinedError);
 export const userSchema = names

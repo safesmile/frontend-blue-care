@@ -1,3 +1,6 @@
+import { peopleMessages } from "@/lib/session-messages";
+import { SessionControls } from "@/components/shared/session-controls";
+import { canOpenRoute } from "@/lib/access-context";
 import { useAuth } from "@/hooks/use-auth";
 import { getInitials } from "@/utils/get-initials";
 import { LogoutButton } from "@/components/shared/logout-button";
@@ -10,14 +13,13 @@ import { BellIcon, MenuTwoIcon, SearchIcon, ChevronDownIcon } from "@/icons";
 const destinations = [
   ["Resumen", "/"],
   ["Pacientes", "/pacientes"],
-  ["Santiago Izquierdo", "/pacientes/santiago-izquierdo"],
   ["Membresías", "/membresias"],
   ["Planes y versiones", "/planes"],
   ["Beneficios y consumos", "/beneficios"],
   ["Prevención dental", "/prevencion"],
   ["Clínicas", "/clinicas"],
-  ["Usuarios y permisos", "/usuarios"],
-  ["Invitaciones", "/usuarios/invitaciones"],
+  [peopleMessages().collaborators, "/colaboradores"],
+  [peopleMessages().history, "/colaboradores/invitaciones"],
   ["Auditoría", "/auditoria"],
 ];
 export default function AppHeader() {
@@ -54,14 +56,7 @@ export default function AppHeader() {
       >
         <MenuTwoIcon />
       </Button>
-      <select
-        aria-label="Clínica de trabajo"
-        className="max-w-40 rounded-lg border-0 bg-transparent text-xs dark:bg-[#142539] dark:text-gray-200"
-      >
-        <option>Todas las clínicas</option>
-        <option>Sede Central</option>
-        <option>Sede Norte</option>
-      </select>
+      <SessionControls />
       <div className="relative order-last w-full sm:order-none sm:w-auto sm:flex-1">
         <label className="flex items-center gap-2 rounded-lg bg-blue-50 px-3 dark:bg-[#1b3046]">
           <SearchIcon className="size-5" />
@@ -83,8 +78,10 @@ export default function AppHeader() {
               {query ? `Resultados para «${query}»` : "Accesos rápidos"}
             </h2>
             {destinations
-              .filter(([name]) =>
-                name.toLowerCase().includes(query.toLowerCase()),
+              .filter(
+                ([name, to]) =>
+                  canOpenRoute(user, to) &&
+                  name.toLowerCase().includes(query.toLowerCase()),
               )
               .map(([name, to]) => (
                 <Link
@@ -96,8 +93,10 @@ export default function AppHeader() {
                   {name}
                 </Link>
               ))}
-            {!destinations.some(([name]) =>
-              name.toLowerCase().includes(query.toLowerCase()),
+            {!destinations.some(
+              ([name, to]) =>
+                canOpenRoute(user, to) &&
+                name.toLowerCase().includes(query.toLowerCase()),
             ) && <p>No se encontraron resultados.</p>}
           </section>
         )}

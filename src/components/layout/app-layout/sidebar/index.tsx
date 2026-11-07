@@ -1,3 +1,5 @@
+import { useAuth } from "@/hooks/use-auth";
+import { canOpenRoute } from "@/lib/access-context";
 import { Sidebar, SidebarContent, useSidebar } from "@/components/ui/sidebar";
 import { useState } from "react";
 import { useLocation } from "react-router";
@@ -25,6 +27,7 @@ const findMatchingSubmenu = (path: string) => {
 };
 
 export default function AppSidebar() {
+  const { user } = useAuth();
   const { open, isMobile, isHovered } = useSidebar();
   const { pathname } = useLocation();
 
@@ -54,9 +57,14 @@ export default function AppSidebar() {
     });
   };
 
-  const activeSections = menuSections.filter(
-    (section) => section.items.length > 0,
-  );
+  const activeSections = menuSections
+    .map((section) => ({
+      ...section,
+      items: section.items.filter(
+        (item) => !item.path || canOpenRoute(user, item.path),
+      ),
+    }))
+    .filter((section) => section.items.length > 0);
 
   return (
     <Sidebar side="left" collapsible="icon">

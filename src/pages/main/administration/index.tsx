@@ -113,9 +113,6 @@ export default function AdministrationPage({ module }: { module: string }) {
           ),
         )}
       />
-      <p className="mt-5 text-xs text-gray-500 dark:text-gray-400">
-        Mostrando {filtered.length} registros · Página 1 de 1
-      </p>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogTitle>{detail ? detail.cells[0] : config.action}</DialogTitle>

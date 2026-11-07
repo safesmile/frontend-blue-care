@@ -1,3 +1,8 @@
+import { notify } from "@/lib/notify";
+import { peopleMessages } from "@/lib/session-messages";
+import { BackLink } from "@/components/shared/navigation-actions";
+import { sessionMessages } from "@/lib/session-messages";
+import { sessionHome } from "@/lib/access-context";
 import { useEffect, useState } from "react";
 import {
   Link,
@@ -27,8 +32,8 @@ const content: Record<
 > = {
   login: {
     title: "Iniciar sesión",
-    description: "Bienvenido al panel administrativo.",
-    button: "Entrar al panel",
+    description: sessionMessages().welcome,
+    button: sessionMessages().signIn,
   },
   recovery: {
     title: "Recuperar acceso",
@@ -138,10 +143,19 @@ function AuthForm({ mode }: { mode: AuthMode }) {
   }, [mode, token, validToken, previewAttempt]);
   const state = location.state as { from?: unknown; message?: unknown } | null;
   if (mode === "login" && auth.status === "authenticated")
-    return <Navigate to={safeReturnPath(state?.from)} replace />;
+    return (
+      <Navigate
+        to={state?.from ? safeReturnPath(state.from) : sessionHome(auth.user)}
+        replace
+      />
+    );
   const blocked =
     (tokenFlow && !validToken) ||
     (mode === "invitation" && previewState !== "ready");
+  function showNotice(message: string) {
+    setNotice(message);
+    notify.success(message);
+  }
   const submit = handleSubmit(async (values) => {
     setFailure("");
     setNotice("");
@@ -149,17 +163,23 @@ function AuthForm({ mode }: { mode: AuthMode }) {
       switch (mode) {
         case "login":
           await api.login(values.email!, values.password!);
-          void navigate(safeReturnPath(state?.from), { replace: true });
+          notify.success(peopleMessages().signedIn);
+          void navigate(
+            state?.from
+              ? safeReturnPath(state.from)
+              : sessionHome(api.getSnapshot().user),
+            { replace: true },
+          );
           return;
         case "recovery":
           await api.forgotPassword(values.email!);
-          setNotice(
+          showNotice(
             "Si la cuenta cumple los requisitos, recibirás un enlace de recuperación en tu correo. Revisa también la carpeta de spam.",
           );
           break;
         case "activation-request":
           await api.requestActivation(values.email!);
-          setNotice(
+          showNotice(
             "Si la cuenta está registrada y pendiente de activar, recibirás un enlace en tu correo. No necesitas una membresía para activar tu cuenta.",
           );
           break;
@@ -167,7 +187,7 @@ function AuthForm({ mode }: { mode: AuthMode }) {
         case "activate":
         case "invitation":
           await api.redeem(mode, token, values.password!);
-          setNotice(
+          showNotice(
             mode === "reset"
               ? "Contraseña restablecida. Inicia sesión con tu nueva contraseña."
               : "Tu cuenta está lista. Ya puedes iniciar sesión.",
@@ -175,12 +195,13 @@ function AuthForm({ mode }: { mode: AuthMode }) {
           break;
         case "confirm-email":
           await api.confirmEmail(token);
-          setNotice(
+          showNotice(
             "Correo confirmado. Inicia sesión con tu nuevo correo electrónico.",
           );
           break;
         case "change-password":
           await api.changePassword(values.currentPassword!, values.password!);
+          notify.success(peopleMessages().updated);
           void navigate("/iniciar-sesion", {
             replace: true,
             state: {
@@ -190,7 +211,7 @@ function AuthForm({ mode }: { mode: AuthMode }) {
           return;
         case "change-email":
           await api.changeEmail(values.email!, values.currentPassword!);
-          setNotice(
+          showNotice(
             "Enviamos un enlace al nuevo correo. Ábrelo para confirmar el cambio; mientras tanto tu correo actual sigue vigente.",
           );
           break;
@@ -211,12 +232,12 @@ function AuthForm({ mode }: { mode: AuthMode }) {
           },
         });
     } catch (error) {
-      setFailure(
-        authErrorMessage(
-          error,
-          mode === "login" ? "login" : tokenFlow ? "token" : "credentials",
-        ),
+      const message = authErrorMessage(
+        error,
+        mode === "login" ? "login" : tokenFlow ? "token" : "credentials",
       );
+      setFailure(message);
+      notify.error(message);
     }
   });
   const passwordField = (
@@ -379,9 +400,9 @@ function AuthForm({ mode }: { mode: AuthMode }) {
             </Link>
           </>
         ) : (
-          <Link className="bc-link" to="/iniciar-sesion">
-            Volver al inicio de sesión
-          </Link>
+          <BackLink to="/iniciar-sesion">
+            {peopleMessages().backToSignIn}
+          </BackLink>
         )}
         {tokenFlow && !done && (
           <Link
@@ -402,9 +423,7 @@ function AuthForm({ mode }: { mode: AuthMode }) {
           </p>
         )}
         {["change-email", "change-password"].includes(mode) && (
-          <Link className="bc-link" to="/mi-cuenta">
-            Volver a mi cuenta
-          </Link>
+          <BackLink to="/mi-cuenta">{peopleMessages().backToAccount}</BackLink>
         )}
       </div>
     </AuthLayout>

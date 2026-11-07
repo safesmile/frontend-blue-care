@@ -11,13 +11,23 @@ export function canEdit(actor: AuthUser | null, target: AuthUser) {
       !!actor?.roles.includes("superadmin"))
   );
 }
-export function assignableRoles(actor: AuthUser, roles: Role[]) {
+export function assignableRoles(
+  actor: AuthUser,
+  roles: Role[],
+  clinicId?: string,
+) {
+  const permissions = clinicId
+    ? (actor.clinics?.find((clinic) => clinic.id === clinicId)?.permissions ??
+      actor.permissions)
+    : (actor.globalPermissions ?? actor.permissions);
+  const globalRoles = actor.globalRoles ?? actor.roles;
   return roles.filter(
     (role) =>
       !role.name.startsWith("legacy-") &&
-      (role.name !== "superadmin" || actor.roles.includes("superadmin")) &&
-      (actor.roles.includes("superadmin") ||
-        role.permissions.every((p) => actor.permissions.includes(p))),
+      (role.name !== "superadmin" ||
+        (!clinicId && globalRoles.includes("superadmin"))) &&
+      (globalRoles.includes("superadmin") ||
+        role.permissions.every((p) => permissions.includes(p))),
   );
 }
 export function invitationState(invitation: Invitation, now: number) {

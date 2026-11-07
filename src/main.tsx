@@ -1,3 +1,4 @@
+import { AppToasts } from "@/components/shared/app-toasts";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/contexts";
 import { StrictMode } from "react";
@@ -13,7 +14,9 @@ createRoot(document.getElementById("root")!).render(
       <ThemeProvider>
         <HelmetProvider>
           <TooltipProvider>
-            <App />
+            <AppToasts>
+              <App />
+            </AppToasts>
           </TooltipProvider>
         </HelmetProvider>
       </ThemeProvider>

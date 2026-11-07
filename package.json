@@ -13,7 +13,8 @@
     "lint:fix": "oxlint --fix && eslint --fix .",
     "preview": "vite preview",
     "test:auth": "node --test tests/auth-*.test.mjs",
-    "test:users": "node --test tests/users.test.mjs"
+    "test:users": "node --test tests/users.test.mjs",
+    "test:people": "node --test tests/people.test.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",

@@ -7,10 +7,12 @@ import { assignableRoles, has, roleLabel } from "./policies";
 import type { Role } from "./api";
 export default function RolesField({
   actor,
+  clinicId,
   value,
   onChange,
 }: {
   actor: AuthUser;
+  clinicId?: string;
   value: string[];
   onChange: (value: string[]) => void;
 }) {
@@ -76,7 +78,7 @@ export default function RolesField({
         </Button>
       </div>
     );
-  const allowed = assignableRoles(actor, result.roles);
+  const allowed = assignableRoles(actor, result.roles, clinicId);
   return (
     <fieldset className="space-y-2">
       <legend className="mb-2 text-sm font-medium">Roles</legend>

@@ -1,3 +1,5 @@
+import { notify } from "@/lib/notify";
+import { peopleMessages } from "@/lib/session-messages";
 import { useState, type ReactNode } from "react";
 import { useNavigate } from "react-router";
 import { api } from "@/lib/api";
@@ -24,9 +26,12 @@ export function LogoutButton({
           setError("");
           try {
             await api.logout();
+            notify.success(peopleMessages().signedOut);
             void navigate("/iniciar-sesion", { replace: true });
           } catch (error) {
-            setError(authErrorMessage(error));
+            const message = authErrorMessage(error);
+            setError(message);
+            notify.error(message);
           } finally {
             setPending(false);
           }

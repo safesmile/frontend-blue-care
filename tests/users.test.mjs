@@ -81,6 +81,7 @@ test("invitation creation submits normalized names/email and explicit roles with
       lastName: "Pérez",
       email: "ana@example.test",
       roles: ["operator"],
+      clinicAssignments: [],
     },
   });
 });

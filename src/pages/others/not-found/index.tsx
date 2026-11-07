@@ -1,4 +1,5 @@
-import { Link } from "react-router";
+import { peopleMessages } from "@/lib/session-messages";
+import { BackLink } from "@/components/shared/navigation-actions";
 import { PageMeta } from "@/components/shared/page-meta";
 export default function NotFoundPage() {
   return (
@@ -9,9 +10,7 @@ export default function NotFoundPage() {
       />
       <section className="bc-panel text-center">
         <h1 className="bc-title">404 · Página no encontrada</h1>
-        <Link className="bc-link" to="/">
-          Volver al resumen
-        </Link>
+        <BackLink to="/">{peopleMessages().backToSummary}</BackLink>
       </section>
     </>
   );

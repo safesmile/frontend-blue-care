@@ -1,10 +1,14 @@
-import UsersPage from "@/pages/main/users";
+import PatientDetailPage from "@/pages/main/patient-detail";
+import PeopleDirectoryPage from "@/pages/main/people";
+import CollaboratorAccessPage from "@/pages/main/people/access-page";
+import PeopleEditPage from "@/pages/main/people/edit-page";
+import CreateInvitationPage from "@/pages/main/invitations/create-page";
+import InvitationHistoryPage from "@/pages/main/invitations";
 import RequireAuth from "@/components/shared/require-auth";
 import AccountPage from "@/pages/main/account";
 import AppLayout from "@/components/layout/app-layout";
 import DashboardPage from "@/pages/main/dashboard";
 import AdministrationPage from "@/pages/main/administration";
-import PatientDetailPage from "@/pages/main/patient-detail";
 import MembershipAssignmentPage from "@/pages/main/membership-assignment";
 import PlanBenefitsPage from "@/pages/main/plan-benefits";
 import ConsumptionRegistrationPage from "@/pages/main/consumption-registration";
@@ -78,11 +82,67 @@ export default function App() {
           <Route path="/mi-cuenta" element={<AccountPage />} />
           <Route
             path="/pacientes"
-            element={<AdministrationPage key="pacientes" module="pacientes" />}
+            element={<PeopleDirectoryPage key="patients" audience="patients" />}
           />
           <Route
-            path="/pacientes/santiago-izquierdo"
-            element={<PatientDetailPage />}
+            path="/pacientes/invitar"
+            element={
+              <CreateInvitationPage key="patient-invite" audience="patients" />
+            }
+          />
+          <Route
+            path="/pacientes/invitaciones"
+            element={
+              <InvitationHistoryPage
+                key="patient-history"
+                audience="patients"
+              />
+            }
+          />
+          <Route path="/pacientes/:id" element={<PatientDetailPage />} />
+          <Route
+            path="/pacientes/:id/editar"
+            element={<PeopleEditPage key="patient-edit" audience="patients" />}
+          />
+          <Route
+            path="/colaboradores"
+            element={
+              <PeopleDirectoryPage
+                key="collaborators"
+                audience="collaborators"
+              />
+            }
+          />
+          <Route
+            path="/colaboradores/invitar"
+            element={
+              <CreateInvitationPage
+                key="collaborator-invite"
+                audience="collaborators"
+              />
+            }
+          />
+          <Route
+            path="/colaboradores/invitaciones"
+            element={
+              <InvitationHistoryPage
+                key="collaborator-history"
+                audience="collaborators"
+              />
+            }
+          />
+          <Route
+            path="/colaboradores/:id/acceso"
+            element={<CollaboratorAccessPage />}
+          />
+          <Route
+            path="/colaboradores/:id/editar"
+            element={
+              <PeopleEditPage
+                key="collaborator-edit"
+                audience="collaborators"
+              />
+            }
           />
           <Route
             path="/membresias"
@@ -122,10 +182,13 @@ export default function App() {
             path="/clinicas"
             element={<AdministrationPage key="clinicas" module="clinicas" />}
           />
-          <Route path="/usuarios" element={<UsersPage key="users" />} />
+          <Route
+            path="/usuarios"
+            element={<Navigate to="/colaboradores" replace />}
+          />
           <Route
             path="/usuarios/invitaciones"
-            element={<UsersPage key="invitations" tab="invitations" />}
+            element={<Navigate to="/colaboradores/invitaciones" replace />}
           />
           <Route
             path="/auditoria"

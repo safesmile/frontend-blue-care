@@ -1,5 +1,6 @@
+import { peopleMessages } from "@/lib/session-messages";
+import { BackLink } from "@/components/shared/navigation-actions";
 import { useState } from "react";
-import { Link } from "react-router";
 import { PageMeta } from "@/components/shared/page-meta";
 import { PageBreadcrumb } from "@/components/shared/page-breadcrumb";
 import { Button } from "@/components/ui/button";
@@ -20,9 +21,9 @@ export default function PlanBenefitsPage() {
       >
         <div className="mb-6 flex gap-4">
           <Button type="submit">Guardar borrador</Button>
-          <Link className="bc-link self-center" to="/planes">
-            Volver a planes
-          </Link>
+          <BackLink className="self-center" to="/planes">
+            {peopleMessages().backToPlans}
+          </BackLink>
         </div>
         <section className="bc-panel">
           <div className="space-y-6">
