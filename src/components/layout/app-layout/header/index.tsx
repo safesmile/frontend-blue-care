@@ -1,4 +1,4 @@
-import { peopleMessages } from "@/lib/session-messages";
+import { inboxMessages, peopleMessages } from "@/lib/session-messages";
 import { SessionControls } from "@/components/shared/session-controls";
 import { canOpenRoute } from "@/lib/access-context";
 import { useAuth } from "@/hooks/use-auth";
@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { useSidebar } from "@/components/ui/sidebar";
 import ThemeToggleButton from "@/components/shared/header/theme-toggler";
 import { BellIcon, MenuTwoIcon, SearchIcon, ChevronDownIcon } from "@/icons";
+import { NotificationInbox } from "./notification-inbox";
 const destinations = [
   ["Resumen", "/"],
   ["Pacientes", "/pacientes"],
@@ -102,36 +103,26 @@ export default function AppHeader() {
         )}
       </div>
       <ThemeToggleButton />
-      <div className="relative">
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label="Notificaciones"
-          aria-expanded={panel === "notifications"}
-          onClick={() => toggle("notifications")}
-        >
-          <BellIcon />
-        </Button>
-        {panel === "notifications" && (
-          <section className="bc-popover right-0 mt-3 w-76">
-            <h2 className="mb-3 font-medium">Notificaciones · 3 nuevas</h2>
-            {[
-              ["32 membresías próximas a vencer", "/membresias"],
-              ["Limpieza de Santiago · 15 nov", "/prevencion"],
-              ["Nuevo acceso pendiente de verificar", "/usuarios"],
-            ].map(([name, to]) => (
-              <Link
-                className="bc-menu-link"
-                to={to}
-                key={to}
-                onClick={() => setPanel(null)}
-              >
-                {name}
-              </Link>
-            ))}
-          </section>
-        )}
-      </div>
+      {user?.permissions.includes("notifications:inbox") && (
+        <div className="relative">
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label={inboxMessages().title}
+            aria-expanded={panel === "notifications"}
+            onClick={() => toggle("notifications")}
+          >
+            <BellIcon />
+          </Button>
+          {panel === "notifications" && (
+            <NotificationInbox
+              key={user.id}
+              userId={user.id}
+              canMarkRead={user.permissions.includes("notifications:read")}
+            />
+          )}
+        </div>
+      )}
       <div className="relative">
         <Button
           variant="ghost"

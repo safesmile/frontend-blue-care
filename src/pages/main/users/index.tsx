@@ -1,3 +1,6 @@
+import { DynamicTable } from "@/components/shared/dynamic-table";
+import { EyeIcon, KeyIcon, PencilIcon, SendIcon, TrashBinIcon } from "@/icons";
+import { peopleMessages } from "@/lib/session-messages";
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { useAuth } from "@/hooks/use-auth";
@@ -19,7 +22,6 @@ import {
   canEdit,
   canResend,
   canRevoke,
-  resendWait,
   invitationState,
   roleLabel,
 } from "./policies";
@@ -68,6 +70,11 @@ export default function UsersPage({
   tab?: "users" | "invitations";
 }) {
   const { user: actor } = useAuth();
+  const t = peopleMessages();
+  function changeLimit(size: number) {
+    setLimit(size);
+    setOffset(0);
+  }
   const isInvitations = tab === "invitations";
   const [offset, setOffset] = useState(0);
   const [limit, setLimit] = useState(25);
@@ -339,238 +346,142 @@ export default function UsersPage({
                 Reintentar listado
               </Button>
             </section>
+          ) : isInvitations ? (
+            <DynamicTable
+              rowKey={(row) => row.id}
+              busy={busy}
+              manual={{
+                page: { items: invitations, total: resource.total },
+                offset,
+                limit,
+                onOffset: setOffset,
+                onLimit: changeLimit,
+              }}
+              columns={[
+                {
+                  id: "name",
+                  label: "Persona invitada",
+                  render: (row) => (
+                    <>
+                      <p>
+                        {row.firstName} {row.lastName}
+                      </p>
+                      <p className="text-xs text-gray-500">{row.email}</p>
+                    </>
+                  ),
+                },
+                {
+                  id: "roles",
+                  label: "Roles",
+                  value: (row) => row.roles.map(roleLabel).join(", "),
+                },
+                {
+                  id: "status",
+                  label: "Estado",
+                  value: (row) => statusLabels[invitationState(row, now)],
+                },
+                {
+                  id: "delivery",
+                  label: "Correo / vigencia",
+                  render: (row) => (
+                    <>
+                      <p>{deliveryLabels[row.deliveryStatus]}</p>
+                      <p className="text-xs text-gray-500">
+                        {date(row.expiresAt)}
+                      </p>
+                    </>
+                  ),
+                },
+              ]}
+              actions={[
+                {
+                  label: t.tableDetails,
+                  icon: <EyeIcon className="size-4" />,
+                  onClick: (invitation) =>
+                    open({ kind: "invitation", invitation }),
+                },
+                {
+                  label: t.resend,
+                  icon: <SendIcon className="size-4" />,
+                  visible: (row) =>
+                    has(actor, "invitations:resend", "roles:assign") &&
+                    ["pending", "expired"].includes(invitationState(row, now)),
+                  disabled: (row) => !canResend(actor, row, now),
+                  onClick: (invitation) => open({ kind: "resend", invitation }),
+                },
+                {
+                  label: t.revoke,
+                  icon: <TrashBinIcon className="size-4" />,
+                  destructive: true,
+                  visible: (row) => canRevoke(actor, row, now),
+                  onClick: (invitation) => open({ kind: "revoke", invitation }),
+                },
+              ]}
+            />
           ) : (
-            <>
-              <div className="bc-panel overflow-x-auto">
-                <table className="w-full min-w-200 text-left text-sm">
-                  <thead className="bg-blue-50 text-xs text-blue-600 dark:bg-[#1b3046] dark:text-blue-300">
-                    <tr>
-                      {(isInvitations
-                        ? [
-                            "Persona invitada",
-                            "Roles",
-                            "Estado",
-                            "Correo / vigencia",
-                            "Acciones",
-                          ]
-                        : [
-                            "Usuario",
-                            "Roles",
-                            "Acceso",
-                            "Verificación",
-                            "Acciones",
-                          ]
-                      ).map((label) => (
-                        <th
-                          key={label}
-                          className="px-4 py-4 font-medium"
-                          scope="col"
-                        >
-                          {label}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {isInvitations
-                      ? invitations.map((invitation) => (
-                          <tr
-                            key={invitation.id}
-                            className="border-b border-gray-100 dark:border-gray-800"
-                          >
-                            <td className="px-4 py-5">
-                              <p className="font-medium">
-                                {invitation.firstName} {invitation.lastName}
-                              </p>
-                              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                {invitation.email}
-                              </p>
-                            </td>
-                            <td className="px-4 py-5">
-                              {invitation.roles.map(roleLabel).join(", ")}
-                            </td>
-                            <td className="px-4 py-5">
-                              {statusLabels[invitationState(invitation, now)]}
-                            </td>
-                            <td className="px-4 py-5">
-                              <p
-                                className={
-                                  invitation.deliveryStatus === "failed"
-                                    ? "text-red-500"
-                                    : ""
-                                }
-                              >
-                                {deliveryLabels[invitation.deliveryStatus]}
-                              </p>
-                              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                Vence: {date(invitation.expiresAt)}
-                              </p>
-                            </td>
-                            <td className="px-4 py-5">
-                              <div className="flex flex-wrap gap-3">
-                                <button
-                                  className="bc-link"
-                                  onClick={() =>
-                                    open({ kind: "invitation", invitation })
-                                  }
-                                >
-                                  Ver detalle
-                                </button>
-                                {has(
-                                  actor,
-                                  "invitations:resend",
-                                  "roles:assign",
-                                ) &&
-                                  ["pending", "expired"].includes(
-                                    invitationState(invitation, now),
-                                  ) && (
-                                    <button
-                                      disabled={
-                                        busy ||
-                                        !canResend(actor, invitation, now)
-                                      }
-                                      className="bc-link disabled:cursor-default disabled:opacity-50"
-                                      onClick={() =>
-                                        open({ kind: "resend", invitation })
-                                      }
-                                    >
-                                      {resendWait(invitation, now) > 0
-                                        ? `Reenviar en ${resendWait(invitation, now)} s`
-                                        : "Reenviar"}
-                                    </button>
-                                  )}
-                                {canRevoke(actor, invitation, now) && (
-                                  <button
-                                    className="bc-link text-red-500"
-                                    disabled={busy}
-                                    onClick={() =>
-                                      open({ kind: "revoke", invitation })
-                                    }
-                                  >
-                                    Revocar
-                                  </button>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                        ))
-                      : users.map((user) => (
-                          <tr
-                            key={user.id}
-                            className="border-b border-gray-100 dark:border-gray-800"
-                          >
-                            <td className="px-4 py-5">
-                              <p className="font-medium">
-                                {user.name}
-                                {user.id === actor.id ? " (tú)" : ""}
-                              </p>
-                              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                {user.email}
-                              </p>
-                            </td>
-                            <td className="px-4 py-5">
-                              {user.roles.map(roleLabel).join(", ") ||
-                                "Sin roles"}
-                            </td>
-                            <td className="px-4 py-5">
-                              {user.enabled ? "Habilitado" : "Deshabilitado"}
-                            </td>
-                            <td className="px-4 py-5">
-                              {user.verified
-                                ? "Correo verificado"
-                                : "Sin verificar"}
-                            </td>
-                            <td className="px-4 py-5">
-                              <div className="flex flex-wrap gap-3">
-                                <button
-                                  className="bc-link"
-                                  onClick={() => open({ kind: "user", user })}
-                                >
-                                  Ver detalle
-                                </button>
-                                {canEdit(actor, user) && (
-                                  <>
-                                    <button
-                                      className="bc-link"
-                                      disabled={busy}
-                                      onClick={() =>
-                                        open({ kind: "edit", user })
-                                      }
-                                    >
-                                      Editar
-                                    </button>
-                                    <button
-                                      className="bc-link"
-                                      disabled={busy}
-                                      onClick={() =>
-                                        open({ kind: "status", user })
-                                      }
-                                    >
-                                      {user.enabled
-                                        ? "Deshabilitar"
-                                        : "Habilitar"}
-                                    </button>
-                                  </>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                  </tbody>
-                </table>
-                {!(isInvitations ? invitations : users).length && (
-                  <p className="py-8 text-center text-sm text-gray-500 dark:text-gray-400">
-                    {query || filter
-                      ? "No hay coincidencias en esta página."
-                      : isInvitations
-                        ? "Todavía no hay invitaciones."
-                        : "No hay usuarios para mostrar."}
-                  </p>
-                )}
-              </div>
-              <div className="mt-5 flex flex-wrap items-center justify-between gap-4 text-sm">
-                <p>
-                  {isInvitations ? invitations.length : users.length} visibles
-                  en esta página · {resource.total} en total
-                </p>
-                <div className="flex items-center gap-3">
-                  <label>
-                    Por página{" "}
-                    <select
-                      aria-label="Registros por página"
-                      className="ml-2 rounded-lg border border-gray-200 bg-white px-2 py-2 dark:border-gray-700 dark:bg-gray-900"
-                      value={limit}
-                      onChange={(e) => {
-                        setLimit(Number(e.target.value));
-                        setOffset(0);
-                      }}
-                    >
-                      {[10, 25, 50].map((size) => (
-                        <option key={size}>{size}</option>
-                      ))}
-                    </select>
-                  </label>
-                  <Button
-                    variant="outline"
-                    disabled={offset === 0 || busy}
-                    onClick={() => setOffset(Math.max(0, offset - limit))}
-                  >
-                    Anterior
-                  </Button>
-                  <span>
-                    Página {Math.floor(offset / limit) + 1} de{" "}
-                    {Math.max(1, Math.ceil(resource.total / limit))}
-                  </span>
-                  <Button
-                    variant="outline"
-                    disabled={offset + limit >= resource.total || busy}
-                    onClick={() => setOffset(offset + limit)}
-                  >
-                    Siguiente
-                  </Button>
-                </div>
-              </div>
-            </>
+            <DynamicTable
+              rowKey={(row) => row.id}
+              busy={busy}
+              manual={{
+                page: { items: users, total: resource.total },
+                offset,
+                limit,
+                onOffset: setOffset,
+                onLimit: changeLimit,
+              }}
+              columns={[
+                {
+                  id: "name",
+                  label: "Usuario",
+                  render: (row) => (
+                    <>
+                      <p>
+                        {row.name}
+                        {row.id === actor.id ? " (tú)" : ""}
+                      </p>
+                      <p className="text-xs text-gray-500">{row.email}</p>
+                    </>
+                  ),
+                },
+                {
+                  id: "roles",
+                  label: "Roles",
+                  value: (row) =>
+                    row.roles.map(roleLabel).join(", ") || "Sin roles",
+                },
+                {
+                  id: "enabled",
+                  label: "Acceso",
+                  value: (row) => (row.enabled ? t.enabled : t.disabled),
+                },
+                {
+                  id: "verified",
+                  label: "Verificación",
+                  value: (row) =>
+                    row.verified ? "Correo verificado" : "Sin verificar",
+                },
+              ]}
+              actions={[
+                {
+                  label: t.tableDetails,
+                  icon: <EyeIcon className="size-4" />,
+                  onClick: (user) => open({ kind: "user", user }),
+                },
+                {
+                  label: t.editAccount,
+                  icon: <PencilIcon className="size-4" />,
+                  visible: (row) => canEdit(actor, row),
+                  onClick: (user) => open({ kind: "edit", user }),
+                },
+                {
+                  label: t.manageAccess,
+                  tooltip: (row) => (row.enabled ? t.disabled : t.enabled),
+                  icon: <KeyIcon className="size-4" />,
+                  visible: (row) => canEdit(actor, row),
+                  onClick: (user) => open({ kind: "status", user }),
+                },
+              ]}
+            />
           )}
         </>
       )}

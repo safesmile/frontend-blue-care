@@ -1,8 +1,13 @@
+import { peopleMessages } from "@/lib/session-messages";
 import { useRef, useState } from "react";
 import { Link } from "react-router";
 import { PageMeta } from "@/components/shared/page-meta";
 import { PageBreadcrumb } from "@/components/shared/page-breadcrumb";
-import { RecordsTable } from "@/components/shared/records-table";
+import {
+  DynamicTable,
+  type TableColumn,
+} from "@/components/shared/dynamic-table";
+import { EyeIcon } from "@/icons";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -14,19 +19,61 @@ import { modules, type RecordRow } from "./data";
 export default function AdministrationPage({ module }: { module: string }) {
   const config = modules[module];
   const [query, setQuery] = useState("");
-  const [status, setStatus] = useState("");
-  const [clinic, setClinic] = useState("");
   const [rows, setRows] = useState(config.rows);
   const [open, setOpen] = useState(false);
   const [detail, setDetail] = useState<RecordRow | null>(null);
   const [notice, setNotice] = useState("");
   const searchRef = useRef<HTMLInputElement>(null);
-  const filtered = rows.filter(
-    (row) =>
-      row.cells.join(" ").toLowerCase().includes(query.toLowerCase()) &&
-      (!status || row.status === status) &&
-      (!clinic || row.clinic === clinic),
+  const filtered = rows.filter((row) =>
+    row.cells.join(" ").toLowerCase().includes(query.toLowerCase()),
   );
+  const last = config.headers.length - 1;
+  const hasActionLabel = ["Acción", "Detalle"].includes(config.headers[last]);
+  const columns: TableColumn<RecordRow>[] = config.headers
+    .slice(0, hasActionLabel ? last : undefined)
+    .map((label, index) => ({
+      id: `column${index}`,
+      label,
+      value: (row) => row.cells[index],
+      sortable: true,
+      filter: ["Estado", "Publicación"].includes(label)
+        ? {
+            type: "in",
+            options: [...new Set(rows.map((row) => row.cells[index]))].map(
+              (value) => ({ value, label: value }),
+            ),
+          }
+        : { type: "contains" },
+    }));
+  if (!config.headers.includes("Estado")) {
+    columns.push({
+      id: "recordStatus",
+      label: peopleMessages().status,
+      hidden: true,
+      value: (row) => row.status,
+      filter: {
+        type: "in",
+        options: [...new Set(rows.map((row) => row.status))].map((value) => ({
+          value,
+          label: value,
+        })),
+      },
+    });
+  }
+  columns.push({
+    id: "clinicScope",
+    label: peopleMessages().clinic,
+    hidden: true,
+    value: (row) => row.clinic,
+    filter: {
+      type: "in",
+      options: [...new Set(rows.map((row) => row.clinic))]
+        .filter(Boolean)
+        .map((value) => ({ value, label: value })),
+    },
+  });
+  const actionLabel = (row: RecordRow) =>
+    hasActionLabel ? row.cells[last] : peopleMessages().tableDetails;
   return (
     <>
       <PageMeta
@@ -59,59 +106,36 @@ export default function AdministrationPage({ module }: { module: string }) {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
-        <select
-          className="bc-input w-auto"
-          aria-label="Filtrar por estado"
-          value={status}
-          onChange={(e) => setStatus(e.target.value)}
-        >
-          <option value="">Estado: Todos</option>
-          {[...new Set(rows.map((r) => r.status))].map((s) => (
-            <option key={s}>{s}</option>
-          ))}
-        </select>
-        <select
-          className="bc-input w-auto"
-          aria-label="Filtrar por clínica"
-          value={clinic}
-          onChange={(e) => setClinic(e.target.value)}
-        >
-          <option value="">Clínica: Todas</option>
-          <option>Sede Central</option>
-          <option>Sede Norte</option>
-        </select>
       </div>
       {notice && (
         <p role="status" className="bc-notice mb-4">
           {notice}
         </p>
       )}
-      <RecordsTable
-        headers={config.headers}
-        rows={filtered.map((row) =>
-          row.cells.map((cell, i) =>
-            i === row.cells.length - 1 ? (
-              row.href ? (
-                <Link key={i} className="bc-link" to={row.href}>
-                  {cell}
-                </Link>
-              ) : (
-                <button
-                  key={i}
-                  className="bc-link"
-                  onClick={() => {
-                    setDetail(row);
-                    setOpen(true);
-                  }}
-                >
-                  {cell}
-                </button>
-              )
-            ) : (
-              cell
-            ),
-          ),
-        )}
+      <DynamicTable
+        columns={columns}
+        rows={filtered}
+        rowKey={(_row, index) => index}
+        scope={query}
+        actions={[
+          {
+            label: peopleMessages().tableDetails,
+            tooltip: actionLabel,
+            icon: <EyeIcon aria-hidden="true" className="size-4" />,
+            visible: (row) => !!row.href,
+            to: (row) => row.href!,
+          },
+          {
+            label: peopleMessages().tableDetails,
+            tooltip: actionLabel,
+            icon: <EyeIcon aria-hidden="true" className="size-4" />,
+            visible: (row) => !row.href,
+            onClick: (row) => {
+              setDetail(row);
+              setOpen(true);
+            },
+          },
+        ]}
       />
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>

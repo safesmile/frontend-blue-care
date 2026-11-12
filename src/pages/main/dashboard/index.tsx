@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router";
 import { PageMeta } from "@/components/shared/page-meta";
-import { RecordsTable } from "@/components/shared/records-table";
+import { DynamicTable } from "@/components/shared/dynamic-table";
 export default function DashboardPage() {
   const [today] = useState(() => new Date());
   const date = new Intl.DateTimeFormat("es-GT", {
@@ -46,19 +46,70 @@ export default function DashboardPage() {
           Revisar membresías
         </Link>
       </section>
-      <RecordsTable
-        headers={["Paciente", "Próximo cuidado", "Clínica", "Estado"]}
+      <DynamicTable
+        rowKey={(row) => row.name}
+        columns={[
+          {
+            id: "name",
+            label: "Paciente",
+            sortable: true,
+            filter: { type: "contains" },
+            value: (row) => row.name,
+            render: (row) =>
+              row.href ? (
+                <Link className="bc-link" to={row.href}>
+                  {row.name}
+                </Link>
+              ) : (
+                row.name
+              ),
+          },
+          {
+            id: "care",
+            label: "Próximo cuidado",
+            sortable: true,
+            type: "date",
+            filter: { type: "dateRange" },
+            value: (row) => row.dueAt,
+            render: (row) => row.care,
+          },
+          {
+            id: "clinic",
+            label: "Clínica",
+            sortable: true,
+            filter: { type: "contains" },
+            value: (row) => row.clinic,
+          },
+          {
+            id: "status",
+            label: "Estado",
+            sortable: true,
+            value: (row) => row.status,
+          },
+        ]}
         rows={[
-          [
-            <Link key="santiago" className="bc-link" to="/pacientes">
-              Santiago Izquierdo
-            </Link>,
-            "15 nov · Limpieza",
-            "Sede Central",
-            "Programado",
-          ],
-          ["María García", "16 nov · Evaluación", "Sede Norte", "Programado"],
-          ["Carlos Pérez", "18 nov · Limpieza", "Sede Central", "Disponible"],
+          {
+            name: "Santiago Izquierdo",
+            dueAt: "2026-11-15",
+            care: "15 nov · Limpieza",
+            clinic: "Sede Central",
+            status: "Programado",
+            href: "/pacientes",
+          },
+          {
+            name: "María García",
+            dueAt: "2026-11-16",
+            care: "16 nov · Evaluación",
+            clinic: "Sede Norte",
+            status: "Programado",
+          },
+          {
+            name: "Carlos Pérez",
+            dueAt: "2026-11-18",
+            care: "18 nov · Limpieza",
+            clinic: "Sede Central",
+            status: "Disponible",
+          },
         ]}
       />
     </>

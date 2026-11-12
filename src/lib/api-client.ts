@@ -1,7 +1,14 @@
+import type {
+  ClinicIcon,
+  ClinicColor,
+} from "@/components/shared/clinic-appearance";
+
 export type SessionMode = "patient" | "staff";
 export interface AccessibleClinic {
   id: string;
   name: string;
+  icon?: ClinicIcon;
+  color?: ClinicColor;
   roles: string[];
   permissions: string[];
 }

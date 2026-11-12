@@ -43,9 +43,40 @@ export function canOpenRoute(user: AuthUser | null, path: string) {
     return has("invitations:list", "invitations:create");
   if (path.startsWith("/usuarios"))
     return has("users:list", "invitations:list", "invitations:create");
-  if (path.startsWith("/clinicas"))
-    return has("clinics:list", "clinics:staff-manage");
-  if (path.startsWith("/planes")) return has("plans:list", "plans:read");
+  if (path === "/clinicas/nueva")
+    return has("clinics:create") && has("clinics:all");
+  if (path === "/clinicas") return has("clinics:list");
+  const clinicRoute = /^\/clinicas\/([^/]+)(\/editar)?$/.exec(path);
+  if (clinicRoute) {
+    const [, id, edit] = clinicRoute;
+    const clinic = user.clinics?.find((item) => item.id === id);
+    if (!clinic || (user.clinicId && user.clinicId !== id)) return false;
+    const granted = (code: string) =>
+      has(code) &&
+      (user.globalPermissions?.includes(code) ||
+        clinic.permissions.includes(code));
+    return granted("clinics:read") && (!edit || granted("clinics:update"));
+  }
+  if (path === "/planes") return has("plans:list");
+  if (path === "/planes/nuevo") return has("plans:create") && has("plans:read");
+  if (path === "/planes/blue-care/beneficios") return has("benefits:list");
+  if (path === "/planes/vista-previa") return has("plans:list");
+  if (/^\/planes\/[^/]+\/vista-previa$/.test(path)) return has("plans:read");
+  if (/^\/planes\/[^/]+\/versiones\/nueva$/.test(path))
+    return has("plans:read") && has("plans:version");
+  if (/^\/planes\/[^/]+$/.test(path)) return has("plans:read");
+  if (path === "/beneficios") return has("benefits:list");
+  if (path === "/beneficios/nuevo")
+    return (
+      has("benefits:create") && has("benefits:read") && has("benefits:version")
+    );
+  if (/^\/beneficios\/[^/]+\/versiones\/nueva$/.test(path))
+    return has("benefits:read") && has("benefits:version");
+  if (
+    /^\/beneficios\/[^/]+$/.test(path) &&
+    path !== "/beneficios/registrar-consumo"
+  )
+    return has("benefits:read");
   if (path.startsWith("/auditoria")) return has("audit:list");
   if (
     !user.clinics?.length ||
@@ -57,10 +88,13 @@ export function canOpenRoute(user: AuthUser | null, path: string) {
     return has("patients:update") && has("patients:read");
   if (path === "/pacientes") return has("patients:list");
   if (/^\/pacientes\/[^/]+$/.test(path)) return has("patients:read");
-  if (path.startsWith("/membresias"))
-    return has("memberships:list", "memberships:read");
-  if (path.startsWith("/beneficios"))
-    return has("benefits:balances", "benefits:history", "benefits:consume");
+  if (path === "/membresias") return has("memberships:list");
+  if (path === "/membresias/asignar")
+    return (
+      has("memberships:create") && has("patients:list") && has("plans:catalog")
+    );
+  if (/^\/membresias\/[^/]+$/.test(path)) return has("memberships:read");
+  if (path === "/beneficios/registrar-consumo") return has("benefits:consume");
   if (path.startsWith("/prevencion"))
     return has("prevention:list", "prevention:read");
   return false;

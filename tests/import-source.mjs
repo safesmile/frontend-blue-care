@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import ts from "typescript";
-export async function importSource(path) {
+async function sourceUrl(path) {
   const source = await readFile(new URL(path, import.meta.url), "utf8");
   const { outputText } = ts.transpileModule(source, {
     compilerOptions: {
@@ -12,7 +12,14 @@ export async function importSource(path) {
     'from "zod"',
     `from "${import.meta.resolve("zod")}"`,
   );
-  return import(
-    `data:text/javascript;base64,${Buffer.from(resolved).toString("base64")}`
-  );
+  const withListQuery = resolved.includes('from "@/lib/list-page"')
+    ? resolved.replace(
+        'from "@/lib/list-page"',
+        `from "${await sourceUrl("../src/lib/list-page.ts")}"`,
+      )
+    : resolved;
+  return `data:text/javascript;base64,${Buffer.from(withListQuery).toString("base64")}`;
+}
+export async function importSource(path) {
+  return import(await sourceUrl(path));
 }

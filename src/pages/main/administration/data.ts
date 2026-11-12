@@ -42,90 +42,6 @@ export const modules: Record<string, ModuleData> = {
       },
     ],
   },
-  membresias: {
-    title: "Membresías",
-    action: "Asignar membresía",
-    href: "/membresias/asignar",
-    headers: ["Miembro", "Plan / versión", "Vigencia", "Estado"],
-    fields: [],
-    rows: [
-      {
-        cells: [
-          "Santiago Izquierdo",
-          "Blue Care+ · v1",
-          "30 may 2027",
-          "Activo",
-        ],
-        clinic: "Sede Central",
-        status: "Activo",
-        href: "/membresias/asignar",
-      },
-      {
-        cells: ["María García", "Blue Care+ · v1", "15 nov 2026", "Por vencer"],
-        clinic: "Sede Norte",
-        status: "Por vencer",
-        href: "/membresias/asignar",
-      },
-      {
-        cells: ["Carlos Pérez", "Blue Care+ · v1", "20 oct 2026", "Vencido"],
-        clinic: "Sede Central",
-        status: "Vencido",
-        href: "/membresias/asignar",
-      },
-    ],
-  },
-  planes: {
-    title: "Planes y versiones",
-    action: "Crear plan",
-    headers: ["Plan", "Versión", "Publicación", "Acción"],
-    fields: ["Nombre del plan", "Descripción"],
-    rows: [
-      {
-        cells: [
-          "Blue Care+",
-          "v1 · Contratos vigentes",
-          "Publicado",
-          "Consultar",
-        ],
-        clinic: "Sede Central",
-        status: "Publicado",
-        href: "/planes/blue-care/beneficios",
-      },
-      {
-        cells: ["Blue Care+", "v2 · Nuevas condiciones", "Borrador", "Editar"],
-        clinic: "Sede Norte",
-        status: "Borrador",
-        href: "/planes/blue-care/beneficios",
-      },
-      {
-        cells: ["Plan anterior", "v1 · Histórico", "Inactivo", "Consultar"],
-        clinic: "Sede Central",
-        status: "Inactivo",
-        href: "/planes/blue-care/beneficios",
-      },
-    ],
-  },
-  beneficios: {
-    title: "Beneficios y consumos",
-    action: "Consultar paciente",
-    href: "/pacientes",
-    headers: ["Paciente / beneficio", "Utilizados", "Restantes", "Acción"],
-    fields: [],
-    rows: [
-      {
-        cells: ["Santiago · Limpieza", "1 de 2", "1", "Registrar consumo"],
-        clinic: "Sede Central",
-        status: "Disponible",
-        href: "/beneficios/registrar-consumo",
-      },
-      {
-        cells: ["Santiago · Evaluación", "0 de 1", "1", "Registrar consumo"],
-        clinic: "Sede Central",
-        status: "Disponible",
-        href: "/beneficios/registrar-consumo",
-      },
-    ],
-  },
   prevencion: {
     title: "Prevención dental",
     action: "Crear evento",
@@ -163,24 +79,6 @@ export const modules: Record<string, ModuleData> = {
         clinic: "Sede Central",
         status: "Realizado",
         href: "/pacientes",
-      },
-    ],
-  },
-  clinicas: {
-    title: "Clínicas",
-    action: "Nueva clínica",
-    headers: ["Clínica", "Ubicación", "Estado", "Acción"],
-    fields: ["Nombre de la clínica", "Ubicación"],
-    rows: [
-      {
-        cells: ["Sede Central", "Guatemala · Ejemplo", "Activa", "Editar"],
-        clinic: "Sede Central",
-        status: "Activa",
-      },
-      {
-        cells: ["Sede Norte", "Guatemala · Ejemplo", "Activa", "Editar"],
-        clinic: "Sede Norte",
-        status: "Activa",
       },
     ],
   },

@@ -1,48 +1,6 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { peopleMessages } from "@/lib/session-messages";
 
-export function TableSkeleton({
-  headers,
-  rows,
-}: {
-  headers: string[];
-  rows: number;
-}) {
-  const t = peopleMessages();
-  return (
-    <div role="status" aria-label={t.loading} className="overflow-x-auto">
-      <span className="sr-only">{t.loading}</span>
-      <table aria-hidden="true" className="w-full table-fixed text-sm">
-        <thead>
-          <tr className="border-b border-gray-200 text-xs text-gray-500 dark:border-gray-700 dark:text-gray-400">
-            {headers.map((header) => (
-              <th key={header} className="p-3 text-start font-medium">
-                {header}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {Array.from({ length: rows }, (_, index) => (
-            <tr
-              key={index}
-              className="h-16 border-b border-gray-100 dark:border-gray-800"
-            >
-              {headers.map((header, column) => (
-                <td key={header} className="p-3">
-                  <Skeleton
-                    className={`h-5 ${column === headers.length - 1 ? "w-16" : "w-4/5"}`}
-                  />
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
 export function FormSkeleton({
   fields,
   intro = false,

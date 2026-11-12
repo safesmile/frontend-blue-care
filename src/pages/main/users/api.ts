@@ -1,5 +1,5 @@
 import type { AuthUser } from "@/lib/api-client";
-import type { Page } from "@/lib/list-page";
+import { listSearchParams, type ListQuery, type Page } from "@/lib/list-page";
 export type { Page } from "@/lib/list-page";
 export interface Role {
   id: string;
@@ -49,14 +49,14 @@ interface Client {
   ): Promise<T>;
 }
 export function createUsersApi(client: Client) {
-  const page = (limit: number, offset: number) =>
-    new URLSearchParams({ limit: String(limit), offset: String(offset) });
   return {
-    users: (limit: number, offset: number) =>
-      client.authorized<Page<AuthUser>>(`/users?${page(limit, offset)}`),
-    invitations: (limit: number, offset: number) =>
+    users: (limit: number, offset: number, query?: ListQuery) =>
+      client.authorized<Page<AuthUser>>(
+        `/users?${listSearchParams(limit, offset, query)}`,
+      ),
+    invitations: (limit: number, offset: number, query?: ListQuery) =>
       client.authorized<Page<Invitation>>(
-        `/auth/invitations?${page(limit, offset)}`,
+        `/auth/invitations?${listSearchParams(limit, offset, query)}`,
       ),
     user: (id: string) =>
       client.authorized<AuthUser>(`/users/${encodeURIComponent(id)}`),
@@ -86,7 +86,7 @@ export function createUsersApi(client: Client) {
       while (items.length < total) {
         const result = await client.authorized<
           Page<{ id: string; name: string }>
-        >(`/clinics/available?${page(100, items.length)}`);
+        >(`/clinics/available?${listSearchParams(100, items.length)}`);
         if (!result.items.length) break;
         items.push(...result.items);
         total = result.total;
@@ -98,7 +98,7 @@ export function createUsersApi(client: Client) {
       let total = 1;
       while (items.length < total) {
         const result = await client.authorized<Page<Role>>(
-          `/roles?${page(100, items.length)}`,
+          `/roles?${listSearchParams(100, items.length)}`,
         );
         if (!result.items.length) break;
         items.push(...result.items);

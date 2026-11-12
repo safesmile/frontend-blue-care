@@ -16,7 +16,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { BoxIcon, LayerIcon } from "@/icons";
+import { LayerIcon } from "@/icons";
+import { ClinicMark } from "./clinic-mark";
 export function SessionControls() {
   const { user, switching } = useAuth();
   const navigate = useNavigate();
@@ -31,6 +32,7 @@ export function SessionControls() {
     (!user.clinicId || clinics.some((c) => c.id === user.clinicId))
       ? (user.clinicId ?? "all")
       : "";
+  const selectedClinic = clinics.find((clinic) => clinic.id === selection);
   const change = async (operation: () => Promise<void>) => {
     setFailure("");
     try {
@@ -61,12 +63,10 @@ export function SessionControls() {
               aria-label={text.clinic}
               className="h-14! w-64 rounded-xl! border-gray-200 bg-gray-50/70 ps-2.5! pe-3! shadow-none hover:border-teal-300 hover:bg-teal-50/40 focus-visible:ring-teal-500/20 data-popup-open:border-teal-400 sm:w-72 dark:border-gray-700 dark:bg-[#1b3046] dark:hover:border-teal-600 dark:hover:bg-[#20394e]"
             >
-              <span
-                aria-hidden="true"
-                className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-teal-100 text-teal-700 dark:bg-teal-900/50 dark:text-teal-300"
-              >
-                <BoxIcon className="size-5" />
-              </span>
+              <ClinicMark
+                icon={selection === "all" ? "layers" : selectedClinic?.icon}
+                color={selectedClinic?.color}
+              />
               <span className="flex min-w-0 flex-1 flex-col gap-0.5 text-start">
                 <span className="text-[10px] font-medium tracking-wide text-gray-500 dark:text-gray-400">
                   {text.clinic}
@@ -75,7 +75,7 @@ export function SessionControls() {
                   placeholder={text.none}
                   className="block truncate text-xs font-semibold text-gray-800 dark:text-gray-100"
                 >
-                  {clinics.find((clinic) => clinic.id === selection)?.name ??
+                  {selectedClinic?.name ??
                     (selection === "all" ? text.all : text.none)}
                 </SelectValue>
               </span>
@@ -101,7 +101,11 @@ export function SessionControls() {
                     value={clinic.id}
                     className="rounded-lg data-selected:bg-teal-50 dark:data-selected:bg-teal-950/50"
                   >
-                    <BoxIcon className="size-4" />
+                    <ClinicMark
+                      icon={clinic.icon}
+                      color={clinic.color}
+                      className="size-7"
+                    />
                     <span className="max-w-64 truncate text-xs">
                       {clinic.name}
                     </span>

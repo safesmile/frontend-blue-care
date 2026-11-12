@@ -118,4 +118,6 @@ Corrección DN-19 (06/11/2026): eliminado el selector de paciente/personal y la 
 
 El listado /pacientes usa la API clínica. La ficha /pacientes/:id tiene su propio permiso de lectura, distinto del listado y de la edición. El rol admin inicial puede listar y leer fichas solo dentro de sus clínicas asignadas.
 
-Las tablas del panel usan TableTotal y TablePagination: 10 filas por defecto, 25 como máximo, total arriba y página de páginas abajo. usePagedRecords consulta el servidor para pacientes, colaboradores e invitaciones, con limit/offset y la respuesta { items, total }. RecordsTable aplica los mismos controles a las tablas locales. Los enlaces de regreso usan BackLink y las acciones de directorio usan iconos con etiqueta accesible y tooltip.
+Las tablas del panel usan `DynamicTable`, con 10 filas por defecto, hasta 25 por página y el total de registros sobre la tabla. Define las columnas con `TableColumn` y las acciones por fila con `TableAction`. Las columnas pueden usar valores tipados o celdas personalizadas. Las acciones aceptan enlaces o funciones y etiquetas accesibles con tooltip.
+
+Pasa `rows` para filtrar, ordenar y paginar datos locales, o `load` para consultar un listado del servidor. `listSearchParams` serializa el contrato compartido y el cargador devuelve `{ items, total }`. Para los listados del servidor, los identificadores de columnas filtrables u ordenables deben coincidir con los campos que admite el recurso.

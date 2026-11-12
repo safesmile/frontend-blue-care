@@ -5,7 +5,8 @@ import { DEFAULT_PAGE_SIZE, type Page } from "@/lib/list-page";
 
 export function usePagedRecords<T>(
   scope: string,
-  load: (offset: number, limit: number) => Promise<Page<T>>,
+  load?: (offset: number, limit: number) => Promise<Page<T>>,
+  refreshKey = 0,
 ) {
   const [selection, setSelection] = useState({
     scope,
@@ -23,8 +24,9 @@ export function usePagedRecords<T>(
     selection.scope === scope
       ? selection
       : { offset: 0, limit: selection.limit };
-  const key = JSON.stringify([scope, offset, limit, revision]);
+  const key = JSON.stringify([scope, offset, limit, revision, refreshKey]);
   useEffect(() => {
+    if (!load) return;
     let active = true;
     void load(offset, limit)
       .then((page) => {

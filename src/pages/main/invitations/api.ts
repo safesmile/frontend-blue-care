@@ -1,4 +1,4 @@
-import type { Page } from "@/lib/list-page";
+import { listSearchParams, type ListQuery, type Page } from "@/lib/list-page";
 import type { Invitation, Role } from "../users/api";
 export type Audience = "patients" | "collaborators";
 export interface Contact {
@@ -31,22 +31,21 @@ interface Client {
   ): Promise<T>;
 }
 export function createPeopleApi(client: Client) {
-  const page = (offset: number, limit: number) =>
-    new URLSearchParams({
-      limit: String(Math.max(1, Math.min(25, limit))),
-      offset: String(offset),
-    });
+  const page = (offset: number, limit: number, query?: ListQuery) =>
+    listSearchParams(Math.max(1, Math.min(25, limit)), offset, query);
   return {
-    collaborators: (offset = 0, limit = 10) =>
+    collaborators: (offset = 0, limit = 10, query?: ListQuery) =>
       client.authorized<Page<Collaborator>>(
-        `/users/collaborators?${page(offset, limit)}`,
+        `/users/collaborators?${page(offset, limit, query)}`,
       ),
     collaborator: (id: string) =>
       client.authorized<Collaborator>(
         `/users/collaborators/${encodeURIComponent(id)}`,
       ),
-    patients: (offset = 0, limit = 10) =>
-      client.authorized<Page<Patient>>(`/patients?${page(offset, limit)}`),
+    patients: (offset = 0, limit = 10, query?: ListQuery) =>
+      client.authorized<Page<Patient>>(
+        `/patients?${page(offset, limit, query)}`,
+      ),
     patient: (id: string) =>
       client.authorized<Patient>(`/patients/${encodeURIComponent(id)}`),
     updatePatient: (id: string, body: Partial<Patient>) =>
@@ -92,9 +91,14 @@ export function createPeopleApi(client: Client) {
       client.authorized<Role[]>(
         `/auth/invitations/collaborators/roles?${new URLSearchParams({ clinicId })}`,
       ),
-    invitations: (audience: Audience, offset = 0, limit = 10) =>
+    invitations: (
+      audience: Audience,
+      offset = 0,
+      limit = 10,
+      query?: ListQuery,
+    ) =>
       client.authorized<Page<Invitation>>(
-        `/auth/invitations?${page(offset, limit)}&kind=${audience === "patients" ? "patient" : "collaborator"}`,
+        `/auth/invitations?${page(offset, limit, query)}&kind=${audience === "patients" ? "patient" : "collaborator"}`,
       ),
     resend: (id: string) =>
       client.authorized(`/auth/invitations/${encodeURIComponent(id)}/resend`, {

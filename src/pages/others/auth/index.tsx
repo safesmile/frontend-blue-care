@@ -26,8 +26,10 @@ import {
   type AuthMode,
 } from "./schema";
 import AuthLayout from "./layout";
+type PublicAuthMode = Exclude<AuthMode, "change-password" | "change-email">;
+
 const content: Record<
-  AuthMode,
+  PublicAuthMode,
   { title: string; description: string; button: string }
 > = {
   login: {
@@ -70,25 +72,13 @@ const content: Record<
       "Confirma el nuevo correo desde este enlace. Después deberás iniciar sesión nuevamente.",
     button: "Confirmar nuevo correo",
   },
-  "change-password": {
-    title: "Cambiar contraseña",
-    description:
-      "Ingresa tu contraseña actual y elige una nueva. Se cerrarán tus sesiones al guardar.",
-    button: "Cambiar contraseña",
-  },
-  "change-email": {
-    title: "Cambiar correo electrónico",
-    description:
-      "Enviaremos un enlace al correo nuevo. Tu contacto actual se conserva hasta que lo confirmes.",
-    button: "Enviar verificación",
-  },
 };
-export default function AuthPage({ mode }: { mode: AuthMode }) {
+export default function AuthPage({ mode }: { mode: PublicAuthMode }) {
   const location = useLocation();
   // A different email link resets all form/preview state, even on the same route.
   return <AuthForm key={`${mode}:${location.search}`} mode={mode} />;
 }
-function AuthForm({ mode }: { mode: AuthMode }) {
+function AuthForm({ mode }: { mode: PublicAuthMode }) {
   const auth = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -110,12 +100,7 @@ function AuthForm({ mode }: { mode: AuthMode }) {
     "confirm-email",
   ].includes(mode);
   const validToken = tokenSchema.safeParse(token).success;
-  const needsPassword = [
-    "reset",
-    "activate",
-    "invitation",
-    "change-password",
-  ].includes(mode);
+  const needsPassword = ["reset", "activate", "invitation"].includes(mode);
   const {
     register,
     handleSubmit,
@@ -197,22 +182,6 @@ function AuthForm({ mode }: { mode: AuthMode }) {
           await api.confirmEmail(token);
           showNotice(
             "Correo confirmado. Inicia sesión con tu nuevo correo electrónico.",
-          );
-          break;
-        case "change-password":
-          await api.changePassword(values.currentPassword!, values.password!);
-          notify.success(peopleMessages().updated);
-          void navigate("/iniciar-sesion", {
-            replace: true,
-            state: {
-              message: "Contraseña actualizada. Inicia sesión nuevamente.",
-            },
-          });
-          return;
-        case "change-email":
-          await api.changeEmail(values.email!, values.currentPassword!);
-          showNotice(
-            "Enviamos un enlace al nuevo correo. Ábrelo para confirmar el cambio; mientras tanto tu correo actual sigue vigente.",
           );
           break;
       }
@@ -331,18 +300,9 @@ function AuthForm({ mode }: { mode: AuthMode }) {
             disabled={isSubmitting}
             className="space-y-5 disabled:opacity-70"
           >
-            {[
-              "login",
-              "recovery",
-              "activation-request",
-              "change-email",
-            ].includes(mode) && (
+            {["login", "recovery", "activation-request"].includes(mode) && (
               <Field data-invalid={!!errors.email}>
-                <FieldLabel htmlFor="email">
-                  {mode === "change-email"
-                    ? "Nuevo correo electrónico"
-                    : "Correo electrónico"}
-                </FieldLabel>
+                <FieldLabel htmlFor="email">Correo electrónico</FieldLabel>
                 <input
                   id="email"
                   className="bc-input"
@@ -361,8 +321,6 @@ function AuthForm({ mode }: { mode: AuthMode }) {
               </Field>
             )}
             {mode === "login" && passwordField("password", "Contraseña", true)}
-            {["change-password", "change-email"].includes(mode) &&
-              passwordField("currentPassword", "Contraseña actual", true)}
             {needsPassword && (
               <>
                 {passwordField("password", "Nueva contraseña")}
@@ -373,7 +331,7 @@ function AuthForm({ mode }: { mode: AuthMode }) {
                 {passwordField("confirmPassword", "Confirmar nueva contraseña")}
               </>
             )}
-            {(mode === "login" || needsPassword || mode === "change-email") && (
+            {(mode === "login" || needsPassword) && (
               <label className="flex cursor-pointer items-center gap-2 text-sm">
                 <input
                   type="checkbox"
@@ -421,9 +379,6 @@ function AuthForm({ mode }: { mode: AuthMode }) {
             Si la invitación venció o fue revocada, solicita a quien te invitó
             que la reenvíe.
           </p>
-        )}
-        {["change-email", "change-password"].includes(mode) && (
-          <BackLink to="/mi-cuenta">{peopleMessages().backToAccount}</BackLink>
         )}
       </div>
     </AuthLayout>

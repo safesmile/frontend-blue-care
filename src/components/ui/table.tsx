@@ -1,9 +1,4 @@
-import type { ReactNode } from "react";
-
-interface TableProps {
-  children: ReactNode;
-  className?: string;
-}
+import type { ComponentProps, ReactNode } from "react";
 
 interface TableHeaderProps {
   children: ReactNode;
@@ -26,9 +21,9 @@ interface TableCellProps extends React.TdHTMLAttributes<HTMLTableCellElement> {
   className?: string;
 }
 
-const Table: React.FC<TableProps> = ({ children, className }) => {
-  return <table className={`min-w-full ${className}`}>{children}</table>;
-};
+function Table({ className, ...props }: ComponentProps<"table">) {
+  return <table className={className ?? "min-w-full"} {...props} />;
+}
 
 const TableHeader: React.FC<TableHeaderProps> = ({ children, className }) => {
   return <thead className={className}>{children}</thead>;

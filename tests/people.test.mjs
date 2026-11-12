@@ -126,3 +126,23 @@ test("patient list and detail require their respective permissions and a clinic"
     false,
   );
 });
+
+test("list query preserves multiple column filters, sort direction and invitation kind", async () => {
+  const { api, calls } = setup();
+  const filters = [
+    { field: "email", operator: "contains", value: "%test@example.test" },
+    { field: "status", operator: "in", value: ["pending", "expired"] },
+    { field: "createdAt", operator: "dateRange", value: { to: "2026-11-09" } },
+  ];
+  await api.invitations("patients", 25, 25, {
+    filters,
+    sortBy: "createdAt",
+    sortOrder: "desc",
+  });
+  const query = new URL(calls[0].path, "http://localhost").searchParams;
+  assert.equal(query.get("kind"), "patient");
+  assert.equal(query.get("sortBy"), "createdAt");
+  assert.equal(query.get("sortOrder"), "desc");
+  assert.equal(query.get("offset"), "25");
+  assert.deepEqual(JSON.parse(query.get("filters")), filters);
+});

@@ -215,7 +215,6 @@ function ContactInvitation({
         user.permissions.includes("clinics:staff-manage")
       : user.permissions.includes("patients:link") &&
         (!!patient || user.permissions.includes("patients:create")));
-  const missingClinic = !collaborator && !user.clinicId;
   const title = collaborator ? t.inviteCollaborator : t.invitePatient;
   return (
     <>
@@ -233,14 +232,6 @@ function ContactInvitation({
         <p className="mb-6 rounded-xl bg-teal-50 p-4 text-sm text-teal-900 dark:bg-teal-950/60 dark:text-teal-100">
           {collaborator ? t.staffHint : t.patientHint}
         </p>
-        {missingClinic && (
-          <p
-            role="alert"
-            className="mb-5 rounded-xl bg-amber-50 p-4 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-100"
-          >
-            {t.selectClinicFirst}
-          </p>
-        )}
         {patient?.userId ? (
           <p role="status">{t.alreadyLinked}</p>
         ) : (
@@ -255,9 +246,7 @@ function ContactInvitation({
             })}
           >
             <fieldset
-              disabled={
-                !canInvite || isSubmitting || missingClinic || !!pending
-              }
+              disabled={!canInvite || isSubmitting || !!pending}
               className="space-y-5"
             >
               {(
@@ -333,13 +322,7 @@ function ContactInvitation({
                     )}
                   </Field>
                 </>
-              ) : (
-                <p className="text-sm">
-                  <strong>{t.clinic}:</strong>{" "}
-                  {user.clinics?.find((c) => c.id === user.clinicId)?.name ??
-                    "—"}
-                </p>
-              )}
+              ) : null}
               <Button
                 type="submit"
                 disabled={
